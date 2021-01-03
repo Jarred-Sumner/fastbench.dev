@@ -8,6 +8,9 @@
 
   --padding-horizontal: 90px;
 
+  --page-background: black;
+  --page-background-alpha: rgba(0, 0, 0, 0.8);
+
   --result__background-color: black;
   --result__primary-color: var(--color-brand);
   --result__foreground-color: white;
@@ -22,8 +25,11 @@ html,
 body {
   padding: 0;
   margin: 0;
+}
+
+body {
   font-family: var(--body-font);
-  background-color: black;
+  background-color: var(--page-background);
   color: white;
 }
 
@@ -83,6 +89,10 @@ h3 {
   justify-content: space-between;
   align-items: center;
   padding: 34px var(--padding-horizontal);
+  background-color: var(--page-background-alpha);
+  backdrop-filter: blur(2px);
+  position: sticky;
+  top: 0;
 }
 
 .HeroContainer {

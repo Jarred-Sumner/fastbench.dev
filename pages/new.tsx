@@ -1,5 +1,11 @@
+import { PageHeader } from "../src/components/PageHeader";
+
 export const NewBenchmarkPage = () => {
-  return <div>placeholder</div>;
+  return (
+    <div className={"Page NewBenchmarkPage"}>
+      <PageHeader />
+    </div>
+  );
 };
 
 export default NewBenchmarkPage;

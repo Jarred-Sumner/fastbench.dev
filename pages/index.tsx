@@ -7,6 +7,7 @@ import {
   Result,
   ResultCard,
 } from "../src/components/ResultCard";
+import { PageHeader } from "../src/components/PageHeader";
 
 const SAMPLE_DATA: Result[][] = [
   [
@@ -24,11 +25,7 @@ const SAMPLE_DATA: Result[][] = [
 export default function Home() {
   return (
     <div className="Homepage Page">
-      <header className={"LandingHeader"}>
-        <Logo />
-
-        <Navigation />
-      </header>
+      <PageHeader />
 
       <div className={"HeroContainer"}>
         <main className={"Hero"}>
