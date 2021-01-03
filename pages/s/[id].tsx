@@ -1,6 +1,4 @@
-export const ViewBenchmarkPage = (
-  { props: { id, snippets } } = { props: {} }
-) => {
+export const ViewBenchmarkPage = () => {
   return <div>placeholder</div>;
 };
 
