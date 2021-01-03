@@ -1,0 +1,56 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "baseUrl": "./",
+    "downlevelIteration": true,
+    "checkJs": true,
+    "paths": {
+      "shared": ["./shared"],
+      "textures": ["./textures"],
+      "fast-voxel-raycast": ["./noa-engine/lib/fast-voxel-raycast"],
+      "workers": ["./workers/build"],
+      "path": ["path-browserify"],
+      "@thi.ng/api": ["./thing-api"],
+      "@thi.ng/ecs": ["./ecs"],
+      "voxel-aabb-sweep": ["./noa-engine/lib/voxel-aabb-sweep"],
+      "voxel-physics-engine": ["./voxel-physics-engine"],
+      "worldmesh": ["./worldmesh/pkg"],
+      "typedarray-pool": ["./lib/Data/TypedArrayPool.web"],
+      "next/dynamic": ["./components/dynamicPolyfill"]
+    },
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "typeRoots": ["types"],
+    "module": "esnext",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "moduleResolution": "node"
+  },
+  "typeAcquisition": {
+    "include": ["jest"]
+  },
+  "exclude": ["node_modules", "backend"],
+  "include": [
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "./setupTests.ts",
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.tsb",
+    "**/*.jsb",
+    "backend/scripts/importWorld.js",
+    "pages/_app.js",
+    "lib/Data/WorldRegionLoaderWorker.worker",
+    "noa-engine/lib/triangulateCube.js",
+    "atbuildLightPlugin.js"
+  ]
+}
