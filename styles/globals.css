@@ -262,3 +262,27 @@ h3 {
 .ResultCard-linkArrow {
   margin-left: 6px;
 }
+
+@media (max-width: 1152px) {
+  :root {
+    --page-width: 800px;
+    --padding-horizontal: 24px;
+  }
+}
+
+@media (max-width: 800px) {
+  :root {
+    --page-width: 100%;
+    --padding-horizontal: 24px;
+  }
+
+  .Hero-demo {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  :root {
+    --card-width: 100%;
+  }
+}
