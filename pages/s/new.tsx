@@ -1,4 +1,6 @@
-export const NewBenchmarkPage = ({ props: { id, snippets } }) => {
+export const NewBenchmarkPage = (
+  { props: { id, snippets } } = { props: {} }
+) => {
   return <div>placeholder</div>;
 };
 
