@@ -13,7 +13,9 @@
   --result__foreground-color: white;
   --result__muted-color: rgb(165, 165, 165);
 
-  --page-width: 960px;
+  --card-width: 352px;
+
+  --page-width: 1152px;
 }
 
 html,
@@ -89,10 +91,21 @@ h3 {
   display: flex;
 }
 
+.Gallery,
 .HeroContainer,
 .LandingHeader {
   max-width: var(--page-width);
   margin: 0 auto;
+}
+
+.GalleryList {
+  padding: 34px var(--padding-horizontal);
+}
+
+.GalleryList {
+  display: grid;
+  grid-gap: 16px;
+  grid-template-columns: repeat(auto-fit, var(--card-width));
 }
 
 .HeroContainer {
@@ -152,7 +165,7 @@ h3 {
 
 .ResultCard {
   padding: 16px;
-  max-width: 352px;
+  max-width: var(--card-width);
 
   display: grid;
   grid-template-rows: 1fr auto 1fr;

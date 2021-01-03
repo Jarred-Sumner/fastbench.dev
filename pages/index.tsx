@@ -49,7 +49,58 @@ export default function Home() {
         </div>
       </div>
 
-      <div className={"Gallery"}></div>
+      <div className={"Gallery"}>
+        <div className={"GalleryList"}>
+          <ResultCard
+            results={SAMPLE_DATA[0]}
+            title={"Array loops"}
+            href={"/r/123"}
+            colorScheme={CardColorScheme.blue}
+          />
+          <ResultCard
+            results={SAMPLE_DATA[0]}
+            title={"Array loops"}
+            href={"/r/123"}
+            colorScheme={CardColorScheme.blue}
+          />
+          <ResultCard
+            results={SAMPLE_DATA[0]}
+            title={"Array loops"}
+            href={"/r/123"}
+            colorScheme={CardColorScheme.blue}
+          />
+          <ResultCard
+            results={SAMPLE_DATA[0]}
+            title={"Array loops"}
+            href={"/r/123"}
+            colorScheme={CardColorScheme.blue}
+          />
+          <ResultCard
+            results={SAMPLE_DATA[0]}
+            title={"Array loops"}
+            href={"/r/123"}
+            colorScheme={CardColorScheme.blue}
+          />
+          <ResultCard
+            results={SAMPLE_DATA[0]}
+            title={"Array loops"}
+            href={"/r/123"}
+            colorScheme={CardColorScheme.blue}
+          />
+          <ResultCard
+            results={SAMPLE_DATA[0]}
+            title={"Array loops"}
+            href={"/r/123"}
+            colorScheme={CardColorScheme.blue}
+          />
+          <ResultCard
+            results={SAMPLE_DATA[0]}
+            title={"Array loops"}
+            href={"/r/123"}
+            colorScheme={CardColorScheme.blue}
+          />
+        </div>
+      </div>
     </div>
   );
 }
