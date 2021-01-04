@@ -1,10 +1,16 @@
 @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;700&family=Space+Mono:wght@400;700&display=swap");
+@import url("./CodeEditor.css");
+
+* {
+  box-sizing: border-box;
+}
 
 :root {
   --heading-font: "Space Mono", system-ui;
   --body-font: "IBM Plex Sans", system-ui;
 
   --color-brand: #02ff00;
+  --color-brand-muted: rgb(2, 150, 0);
 
   --padding-horizontal: 90px;
 
@@ -19,6 +25,13 @@
   --card-width: 352px;
 
   --page-width: 1152px;
+
+  --snippets_container-background-unfocused: #171717;
+  --snippets_container-background-focused: #0017e9;
+  --snippets_container-background: var(
+    --snippets_container-background-unfocused
+  );
+  --snippets_container-muted-color: rgb(153, 153, 153);
 }
 
 html,
@@ -67,6 +80,12 @@ h3 {
   text-decoration: none;
 }
 
+.SnippetList,
+.NewBenchmarkPageContent {
+  display: grid;
+  grid-row-gap: 16px;
+}
+
 .NavigationLink:hover {
   border-bottom-color: var(--color-brand);
 }
@@ -93,6 +112,7 @@ h3 {
   backdrop-filter: blur(2px);
   position: sticky;
   top: 0;
+  z-index: 999;
 }
 
 .HeroContainer {
@@ -146,6 +166,8 @@ h3 {
 
 .LinkButton {
   color: black;
+  background: none;
+  outline: none;
   background-color: var(--color-brand);
   font-weight: bold;
   font-family: var(--heading-font);
@@ -153,9 +175,39 @@ h3 {
   padding: 10px 17px;
   text-transform: uppercase;
   width: min-content;
+  text-decoration: none;
+
   white-space: nowrap;
+  cursor: pointer;
   display: flex;
   justify-content: space-between;
+  transition: transform 0.1s linear;
+}
+
+.LinkButton:hover {
+  transform: scale(1.03, 1.03);
+}
+
+.LinkButton-arrow {
+  animation: arrow-move-animation 1s ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  animation-delay: 0.1s;
+  transform: translateX(0px) scale(1, 1);
+  animation-play-state: paused;
+}
+
+.LinkButton:hover .LinkButton-arrow {
+  animation-play-state: running;
+}
+
+@keyframes arrow-move-animation {
+  0% {
+    transform: translateX(0px) scale(1, 1);
+  }
+  100% {
+    transform: translateX(4px) scale(1.1, 1.1);
+  }
 }
 
 .LinkButton-arrow {
@@ -273,6 +325,119 @@ h3 {
   margin-left: 6px;
 }
 
+.BenchmarkHeader,
+.SnippetList,
+.CodeEditor {
+  width: var(--page-width);
+  padding: 0px var(--padding-horizontal);
+  margin: 0 auto;
+}
+
+.BenchmarkHeader {
+  display: flex;
+}
+
+.TitleInput-container {
+  display: flex;
+  flex: 1;
+  width: 100%;
+}
+
+.TitleInput {
+  background-color: var(--page-background);
+  appearance: none;
+  -webkit-appearance: none;
+  font-size: 1.5rem;
+  box-shadow: none;
+  outline: 0;
+
+  border: 0;
+  width: 100%;
+  margin-right: 32px;
+  font-family: var(--heading-font);
+  border-bottom: 1px solid transparent;
+  color: white;
+}
+.TitleInput:hover {
+  border-bottom-color: var(--color-brand-muted);
+}
+
+.TitleInput:focus {
+  border-bottom-color: var(--color-brand);
+}
+
+.TitleInput,
+.SnippetTitle {
+  text-transform: uppercase;
+}
+
+.SnippetTitle[disabled] {
+  background-color: transparent;
+}
+
+.SnippetTitle,
+.NewSnippetContainer-label {
+  background: transparent;
+  display: block;
+  flex: 1;
+  appearance: none;
+  -webkit-appearance: none;
+
+  color: white;
+  font-family: var(--heading-font);
+  height: 100%;
+  padding: 16px 12px;
+  margin: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+.NewSnippetContainer,
+.SnippetContainer *,
+.SnippetContainer {
+  --snippets_container-background: var(
+    --snippets_container-background-unfocused
+  );
+}
+
+.NewSnippetContainer,
+.SnippetContainer {
+  transition: background-color 0.1s linear;
+}
+
+.SnippetIcon {
+  display: flex;
+  user-select: none;
+  -webkit-user-select: none;
+  margin-right: 6px;
+  margin-left: auto;
+}
+
+.SnippetIndexIcon {
+  text-transform: uppercase;
+  font-family: var(--heading-font);
+  font-size: 1.1rem;
+  text-align: left;
+  margin-left: 21px;
+  margin-right: 1ch;
+}
+
+.NewSnippetContainer:hover,
+.SnippetContainer:hover *,
+.SnippetContainer:hover {
+  --snippets_container-background: var(--snippets_container-background-focused);
+}
+
+.NewSnippetContainer,
+.SnippetTitleContainer {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 42px auto;
+
+  align-items: center;
+  grid-column-gap: 0;
+}
+
 @media (max-width: 1152px) {
   :root {
     --page-width: 800px;
@@ -295,4 +460,13 @@ h3 {
   :root {
     --card-width: 100%;
   }
+}
+
+.NewSnippetContainer,
+.SnippetContainer {
+  background-color: var(--snippets_container-background);
+}
+
+.NewSnippetContainer {
+  cursor: pointer;
 }
