@@ -74,6 +74,7 @@ export const NewBenchmarkPage = () => {
 
   const [snippets, setSnippets] = React.useState(() => [
     createSnippet(SnippetType.code),
+    createSnippet(SnippetType.code),
   ]);
 
   const updateCode = React.useCallback(

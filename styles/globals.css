@@ -86,6 +86,10 @@ h3 {
   grid-row-gap: 16px;
 }
 
+.NewBenchmarkPageContent {
+  margin-bottom: 42px;
+}
+
 .NavigationLink:hover {
   border-bottom-color: var(--color-brand);
 }
