@@ -405,6 +405,10 @@ h3 {
 }
 
 .SnippetContainer {
+  overflow: hidden;
+}
+
+.SnippetContainer {
   position: relative;
 }
 
@@ -430,44 +434,74 @@ h3 {
   content: "";
   background-color: var(--color-brand);
   transition: transform 0.12s linear;
+  transition-property: opacity, transform;
 }
 
 .SnippetOverlay {
   position: absolute;
   top: 0;
   left: 0;
-  bottom: 0;
   right: 0;
-  width: 100%;
+  bottom: 0;
+  min-width: 100%;
+  min-height: 100%;
+
   z-index: 9999;
-  display: flex;
-  margin: auto 0;
   -webkit-user-select: none;
   user-select: none;
-  align-items: center;
+  flex-direction: column;
+  justify-content: flex-start;
+  font-family: var(--heading-font);
 
   pointer-events: none;
   height: 100%;
-  transform-origin: left;
+  transform-origin: bottom left;
+  transition: transform 0.12s linear;
+  transition-property: transform, backdrop-filter;
+}
 
-  padding: 16px 34px;
+.SnippetContainer--isRunning .SnippetOverlay {
+  transform: translateX(16px) translateY(100%) translateY(-2rem)
+    translateY(-32px);
 }
 
 .SnippetOverlayLabel {
   font-size: 2rem;
   color: black;
-  text-shadow: 0px 0px 1px white;
-  filter: contrast(200%);
+  filter: drop-shadow(0px 0px 3px var(--color-brand));
+  transition: filter 0.12s linear;
+  transition-property: filter, color;
 }
 
-.SnippetOverlayLabel-unit {
-  color: #333;
-  text-shadow: none;
+.CodeContainer {
+  filter: blur(0px);
+  transition: filter 0.12s linear;
+}
+
+.SnippetContainer--ran .CodeContainer {
+  filter: blur(1px);
+}
+
+.SnippetContainer--ran .SnippetOverlayLabel {
+  filter: none;
+  color: var(--color-brand);
+}
+
+.SnippetOverlayLabel-ops {
 }
 
 .SnippetContainer--ran .SnippetOverlay,
 .SnippetContainer--isRunning .SnippetOverlay {
   display: flex;
+}
+
+.SnippetContainer--ran .SnippetOverlay {
+  transform: translateX(48px) translateY(0%) translateY(40%) translateY(72px)
+    scale(1.4, 1.4);
+}
+
+.SnippetContainer--ran .SnippetBackground {
+  opacity: 0;
 }
 
 .SnippetContainer--ran .SnippetBackground,
