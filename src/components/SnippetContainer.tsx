@@ -46,11 +46,18 @@ const SnippetOverlay = React.forwardRef(({ rank, ops }, ref) => {
   );
 });
 
+export enum SnippetRunState {
+  pending,
+  running,
+  ran,
+}
+
 export const SnippetContainer = ({
   onSave,
   title,
   icon,
   placeholder,
+  runState,
   onChangeTitle: _onChangeTitle,
   disableTitle,
   isCollapsed = false,
@@ -66,7 +73,6 @@ export const SnippetContainer = ({
 
   rank,
   ops,
-  isRunning = false,
   overlayRef,
 }) => {
   const onChangeCode = React.useCallback(
@@ -89,7 +95,8 @@ export const SnippetContainer = ({
         "SnippetContainer--collapsed": isCollapsed,
         "SnippetContainer--focused": id === focusedId,
         "SnippetContainer--visible": !isCollapsed,
-        "SnippetContainer--isRunning": isRunning,
+        "SnippetContainer--isRunning": runState === SnippetRunState.running,
+        "SnippetContainer--ran": runState === SnippetRunState.ran,
       })}
     >
       <SnippetBackground ref={progressUpdateRef} />
@@ -110,7 +117,7 @@ export const SnippetContainer = ({
         />
       )}
 
-      {isRunning && <SnippetOverlay ref={overlayRef} rank={rank} ops={ops} />}
+      <SnippetOverlay ref={overlayRef} rank={rank} ops={ops} />
     </div>
   );
 };

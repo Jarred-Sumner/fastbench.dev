@@ -408,6 +408,7 @@ h3 {
   position: relative;
 }
 
+.SnippetContainer .SnippetOverlay,
 .SnippetContainer .SnippetBackground {
   display: none;
 }
@@ -425,7 +426,7 @@ h3 {
   pointer-events: none;
   height: 100%;
   transform-origin: left;
-  transform: scaleX(0.25);
+  transform: scaleX(0);
   content: "";
   background-color: var(--color-brand);
   transition: transform 0.12s linear;
@@ -464,6 +465,12 @@ h3 {
   text-shadow: none;
 }
 
+.SnippetContainer--ran .SnippetOverlay,
+.SnippetContainer--isRunning .SnippetOverlay {
+  display: flex;
+}
+
+.SnippetContainer--ran .SnippetBackground,
 .SnippetContainer--isRunning .SnippetBackground {
   display: block;
 }

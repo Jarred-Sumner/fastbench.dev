@@ -70,7 +70,8 @@ function start(
   let _suite: Suite = new Suite(snippet.name, {
     maxTime: 30,
     name: benchmark.name,
-
+  }).add(snippet.name, snippet.code, {
+    setup: benchmark?.shared?.code ?? null,
     onError: (error) => {
       globalThis.postMessage({ type: MessageType.error, value: error, id });
       stopProgressUpdates();
@@ -98,8 +99,6 @@ function start(
       globalThis.postMessage({ type: MessageType.start, id });
       startSendingProgressUpdates(id);
     },
-  }).add(snippet.name, snippet.code, {
-    setup: benchmark?.shared?.code ?? null,
   });
 
   suite = _suite;

@@ -1,5 +1,8 @@
 import { PageHeader } from "../src/components/PageHeader";
-import { SnippetContainer } from "../src/components/SnippetContainer";
+import {
+  SnippetContainer,
+  SnippetRunState,
+} from "../src/components/SnippetContainer";
 import { TitleInput } from "../src/components/TitleInput";
 import * as React from "react";
 import { FakeLinkButton } from "../src/components/LinkButton";
@@ -7,7 +10,6 @@ import { SharedIcon } from "../src/components/SharedIcon";
 import { PlusIcon } from "../src/components/PlusIcon";
 import { Snippet } from "../src/lib/Snippet";
 import { Benchmark } from "../src/lib/Benchmark";
-import { MessageType } from "../src/WorkerMessage";
 import { BenchmarkRunner } from "../src/lib/BenchmarkRunner";
 import BenchmarkWorker from "../src/BenchmarkWorker.worker";
 
@@ -73,6 +75,7 @@ export const NewBenchmarkPage = () => {
   const [versionKey, setVersionKey] = React.useState(0);
   const [focusedId, setFocusedID] = React.useState(null);
   const workers = React.useRef<Worker[]>(loadWorkers());
+  const [runState, setRunState] = React.useState(SnippetRunState.pending);
 
   const [runner, setRunner] = React.useState<BenchmarkRunner>(
     () => new BenchmarkRunner()
@@ -115,8 +118,9 @@ export const NewBenchmarkPage = () => {
       }
 
       snippet.code = code;
+      setRunState(SnippetRunState.pending);
     },
-    [snippets]
+    [snippets, setRunState]
   );
 
   const progressUpdateRefs = React.useMemo(() => {
@@ -157,7 +161,8 @@ export const NewBenchmarkPage = () => {
       _snippets.push(Snippet.create());
       return _snippets;
     });
-  }, [setSnippets, Snippet.create]);
+    setRunState(SnippetRunState.pending);
+  }, [setSnippets, Snippet.create, setRunState]);
 
   const renderSnippetContainer = React.useCallback(
     (snippet: Snippet, index: number) => {
@@ -168,12 +173,12 @@ export const NewBenchmarkPage = () => {
           placeholder={"Untitled snippet"}
           progressUpdateRef={progressUpdateRefs[0][index]}
           overlayRef={progressUpdateRefs[1][index]}
-          isRunning
           onChangeTitle={updateTitle}
           focusedId={focusedId}
           onFocus={setFocusedID}
           onBlur={setFocusedID}
           code={snippet.code}
+          runState={runState}
           codePlaceholder={"Insert JavaScript benchmark code in here."}
           onChangeCode={updateCode}
           id={snippet.id}
@@ -193,6 +198,7 @@ export const NewBenchmarkPage = () => {
       setFocusedID,
       updateTitle,
       progressUpdateRefs,
+      runState,
     ]
   );
 
@@ -202,6 +208,7 @@ export const NewBenchmarkPage = () => {
   );
 
   const onRunTest = React.useCallback(() => {
+    setRunState(SnippetRunState.running);
     const _benchmark = new Benchmark(snippets, sharedSnippet, title, null);
 
     if (!_benchmark.name.length) {
@@ -212,6 +219,7 @@ export const NewBenchmarkPage = () => {
       (results) => {
         console.timeEnd("Completed test run");
         runner.cleanup();
+        setRunState(SnippetRunState.ran);
         uploadBenchmark(_benchmark).then(
           ({ value: benchmark, error, message }) => {
             if (error) {
@@ -224,6 +232,7 @@ export const NewBenchmarkPage = () => {
         );
       },
       (err) => {
+        setRunState(SnippetRunState.pending);
         console.error(err);
         runner.cleanup();
       }
@@ -239,7 +248,7 @@ export const NewBenchmarkPage = () => {
     //   console.log(benchmark);
     //   debugger;
     // });
-  }, [snippets, sharedSnippet, title, workers, runner]);
+  }, [snippets, sharedSnippet, title, workers, runner, setRunState]);
 
   return (
     <div className={"Page NewBenchmarkPage"}>
