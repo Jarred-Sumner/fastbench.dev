@@ -8,14 +8,24 @@
     "start": "next start"
   },
   "dependencies": {
+    "@octokit/rest": "^18.0.12",
+    "@vercel/fetch": "^6.1.0",
+    "@zeit/next-workers": "^1.0.0",
     "ace-builds": "^1.4.12",
     "benchmark": "^2.1.4",
+    "bowser": "^2.11.0",
     "classnames": "^2.2.6",
     "esbuild": "^0.8.26",
+    "filenamify": "^4.2.0",
+    "nanoid": "^3.1.20",
     "next": "10.0.4",
+    "node-fetch": "^2.6.1",
     "react": "17.0.1",
     "react-ace": "^9.2.1",
-    "react-dom": "17.0.1"
+    "react-dom": "17.0.1",
+    "shortid": "^2.2.16",
+    "slugify": "^1.4.6",
+    "worker-loader": "^3.0.7"
   },
   "devDependencies": {
     "@types/benchmark": "^2.1.0",

@@ -1,4 +1,5 @@
 import type { default as AceEditorType } from "react-ace";
+import * as React from "react";
 
 let AceEditor: typeof AceEditorType;
 
@@ -23,6 +24,7 @@ const options = {
   enableSnippets: true,
   showLineNumbers: true,
   tabSize: 2,
+  useWorker: false,
 };
 
 const editorProps = {
@@ -36,22 +38,24 @@ export const CodeEditor = ({
   placeholder = "Start writing code",
   theme = "monokai",
 }) => (
-  <AceEditor
-    placeholder={placeholder}
-    mode="javascript"
-    theme="monokai"
-    name="blah2"
-    onLoad={onLoad}
-    onChange={onChange}
-    fontSize={"1rem"}
-    height={"200px"}
-    showPrintMargin={true}
-    showGutter={true}
-    editorProps={editorProps}
-    className={"CodeEditor"}
-    width={"100%"}
-    highlightActiveLine={true}
-    defaultValue={defaultValue}
-    setOptions={options}
-  />
+  <div className={"CodeContainer"}>
+    <AceEditor
+      placeholder={placeholder}
+      mode="javascript"
+      theme="monokai"
+      name="blah2"
+      onLoad={onLoad}
+      onChange={onChange}
+      fontSize={"1rem"}
+      height={"200px"}
+      showPrintMargin={true}
+      showGutter={true}
+      editorProps={editorProps}
+      className={"CodeEditor"}
+      width={"100%"}
+      highlightActiveLine={true}
+      defaultValue={defaultValue}
+      setOptions={options}
+    />
+  </div>
 );

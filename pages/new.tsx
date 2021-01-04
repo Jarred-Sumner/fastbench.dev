@@ -5,46 +5,23 @@ import * as React from "react";
 import { FakeLinkButton } from "../src/components/LinkButton";
 import { SharedIcon } from "../src/components/SharedIcon";
 import { PlusIcon } from "../src/components/PlusIcon";
+import { Snippet } from "../src/lib/Snippet";
+import { Benchmark } from "../src/lib/Benchmark";
+import { MessageType } from "../src/WorkerMessage";
+import { BenchmarkRunner } from "../src/lib/BenchmarkRunner";
+import BenchmarkWorker from "../src/BenchmarkWorker.worker";
 
-enum SnippetType {
-  shared,
-  code,
-  placeholder,
+let SAMPLE_DATA;
+
+if (process.env.NODE_ENV === "production") {
+  SAMPLE_DATA = [[], [], []];
+} else {
+  SAMPLE_DATA = [
+    ["var a = new Array(100)\nvar b = new Array();"],
+    ["a.fill(100);", "[].fill"],
+    [`for (let i = 0; i  < 100; i++) { b.push(100); }`, "[].push"],
+  ];
 }
-
-type Snippet = {
-  id?: string;
-  code: string;
-  name: string;
-  type: SnippetType;
-};
-
-const baseSnippetObject: Snippet = {
-  id: null,
-  code: "",
-  name: "",
-  type: SnippetType,
-};
-
-function createSnippet(type: SnippetType) {
-  const snippet = Object.create(baseSnippetObject);
-  snippet.code = "";
-  snippet.name = "";
-  snippet.id = Math.random().toString(16);
-  snippet.type = type;
-  return snippet;
-}
-
-function createSharedSnippet() {
-  const snippet = Object.create(baseSnippetObject);
-  snippet.type = SnippetType.shared;
-  snippet.code = "";
-  snippet.id = Math.random().toString(16);
-  snippet.name = "";
-  return snippet;
-}
-
-const placeholderSnippet = createSnippet(SnippetType.placeholder);
 
 const SnippetIndexIcon = ({ children }) => (
   <div className={"SnippetIcon SnippetIndexIcon"}>{children}</div>
@@ -58,9 +35,49 @@ const NewSnippetButton = ({ onClick }) => (
   </div>
 );
 
+async function uploadBenchmark(benchmark: Benchmark) {
+  return globalThis
+    .fetch(`/api/snippets`, {
+      method: "POST",
+      body: JSON.stringify({ benchmark: benchmark.toJSON() }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+    .then((resp) => resp.json());
+}
+
+const loadWorkers = () => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  let pool;
+  if (typeof navigator.hardwareConcurrency === "number") {
+    pool = new Array(Math.ceil(navigator.hardwareConcurrency / 2));
+  } else {
+    pool = new Array(3);
+  }
+
+  for (let i = 0; i < pool.length; i++) {
+    pool[i] = new BenchmarkWorker({
+      type: "module",
+    });
+    pool[i].name = `Benchmarker #${i}`;
+  }
+  return pool;
+};
+
 export const NewBenchmarkPage = () => {
   const [title, setTitle] = React.useState("");
+  const [versionKey, setVersionKey] = React.useState(0);
   const [focusedId, setFocusedID] = React.useState(null);
+  const workers = React.useRef<Worker[]>(loadWorkers());
+
+  const [runner, setRunner] = React.useState<BenchmarkRunner>(
+    () => new BenchmarkRunner()
+  );
+
   const handleTitleChangeEvent = React.useCallback(
     (event: React.SyntheticEvent<InputEvent, HTMLInputElement>) => {
       setTitle(event.target.value);
@@ -68,30 +85,79 @@ export const NewBenchmarkPage = () => {
     [setTitle]
   );
 
+  const incrementVersionKey = () =>
+    setVersionKey((id) => {
+      id++;
+      return id;
+    });
+
   const [sharedSnippet, setSharedSnippet] = React.useState(() =>
-    createSharedSnippet()
+    Snippet.shared(...SAMPLE_DATA[0])
   );
 
   const [snippets, setSnippets] = React.useState(() => [
-    createSnippet(SnippetType.code),
-    createSnippet(SnippetType.code),
+    Snippet.create(...SAMPLE_DATA[1]),
+    Snippet.create(...SAMPLE_DATA[2]),
   ]);
 
   const updateCode = React.useCallback(
-    (code: string, snippet: Snippet) => {
+    (code: string, id: string) => {
+      let snippet: Snippet;
+      for (let _snippet of snippets) {
+        if (_snippet.id === id) {
+          snippet = _snippet;
+          break;
+        }
+      }
+
+      if (!snippet) {
+        throw `Missing snippet for id ${id}`;
+      }
+
       snippet.code = code;
     },
-    [snippets, sharedSnippet]
+    [snippets]
+  );
+
+  const progressUpdateRefs = React.useMemo(() => {
+    return [
+      snippets.map(() => React.createRef()),
+      snippets.map(() => React.createRef()),
+    ];
+  }, [snippets, snippets.length]);
+
+  React.useEffect(() => {
+    runner.progressBarRefs = progressUpdateRefs[0];
+    runner.opsRefs = progressUpdateRefs[1];
+  }, [progressUpdateRefs, runner]);
+
+  const updateTitle = React.useCallback(
+    (title: string, id: string) => {
+      let snippet: Snippet;
+      for (let _snippet of snippets) {
+        if (_snippet.id === id) {
+          snippet = _snippet;
+          break;
+        }
+      }
+
+      if (!snippet) {
+        throw `Missing snippet for id ${id}`;
+      }
+
+      snippet.name = title;
+    },
+    [snippets]
   );
 
   const addSnippet = React.useCallback(() => {
     setSnippets((snippets) => {
       const _snippets = snippets.slice();
 
-      _snippets.push(createSnippet(SnippetType.code));
+      _snippets.push(Snippet.create());
       return _snippets;
     });
-  }, [setSnippets, createSnippet]);
+  }, [setSnippets, Snippet.create]);
 
   const renderSnippetContainer = React.useCallback(
     (snippet: Snippet, index: number) => {
@@ -100,6 +166,10 @@ export const NewBenchmarkPage = () => {
           key={snippet.id + "-" + focusedId}
           title={snippet.name}
           placeholder={"Untitled snippet"}
+          progressUpdateRef={progressUpdateRefs[0][index]}
+          overlayRef={progressUpdateRefs[1][index]}
+          isRunning
+          onChangeTitle={updateTitle}
           focusedId={focusedId}
           onFocus={setFocusedID}
           onBlur={setFocusedID}
@@ -115,8 +185,61 @@ export const NewBenchmarkPage = () => {
         />
       );
     },
-    [snippets.length, snippets, focusedId, updateCode, setFocusedID]
+    [
+      snippets.length,
+      snippets,
+      focusedId,
+      updateCode,
+      setFocusedID,
+      updateTitle,
+      progressUpdateRefs,
+    ]
   );
+
+  const onChangeSharedSnippet = React.useCallback(
+    (code) => (sharedSnippet.code = code),
+    [sharedSnippet]
+  );
+
+  const onRunTest = React.useCallback(() => {
+    const _benchmark = new Benchmark(snippets, sharedSnippet, title, null);
+
+    if (!_benchmark.name.length) {
+      _benchmark.name = _benchmark.snippets.map((s) => s.name).join(" vs ");
+    }
+    console.time("Completed test run");
+    runner.run(_benchmark, workers.current).then(
+      (results) => {
+        console.timeEnd("Completed test run");
+        runner.cleanup();
+        uploadBenchmark(_benchmark).then(
+          ({ value: benchmark, error, message }) => {
+            if (error) {
+              alert(message);
+              return;
+            }
+            console.log(benchmark);
+            debugger;
+          }
+        );
+      },
+      (err) => {
+        console.error(err);
+        runner.cleanup();
+      }
+    );
+
+    // debugger;
+    //
+    // uploadBenchmark(_benchmark).then(({ value: benchmark, error, message }) => {
+    //   if (error) {
+    //     alert(message);
+    //     return;
+    //   }
+    //   console.log(benchmark);
+    //   debugger;
+    // });
+  }, [snippets, sharedSnippet, title, workers, runner]);
 
   return (
     <div className={"Page NewBenchmarkPage"}>
@@ -131,7 +254,7 @@ export const NewBenchmarkPage = () => {
           />
 
           <div className={"RunTestButtonContainer"}>
-            <FakeLinkButton>Run test</FakeLinkButton>
+            <FakeLinkButton onClick={onRunTest}>Run test</FakeLinkButton>
           </div>
         </div>
 
@@ -140,6 +263,8 @@ export const NewBenchmarkPage = () => {
             disableTitle
             icon={<SharedIcon className={"SnippetIcon"} />}
             placeholder={"Shared code"}
+            code={sharedSnippet.code}
+            onChangeCode={onChangeSharedSnippet}
             codePlaceholder={
               "Insert JavaScript code that runs before all benchmarks in here"
             }

@@ -1,11 +1,15 @@
 import classNames from "classnames";
 import * as React from "react";
 
-export function formatDecimal(num) {
+export function formatDecimal(num, precision = 1) {
   if (Math.abs(num) > 999_999) {
-    return (Math.sign(num) * (Math.abs(num) / 1_000_000)).toFixed(1) + "m";
+    return (
+      (Math.sign(num) * (Math.abs(num) / 1_000_000)).toFixed(precision) + "m"
+    );
   } else if (Math.abs(num) > 999) {
-    let formattedValue = (Math.sign(num) * (Math.abs(num) / 1000)).toFixed(1);
+    let formattedValue = (Math.sign(num) * (Math.abs(num) / 1000)).toFixed(
+      precision
+    );
     if (formattedValue.endsWith(".0")) {
       formattedValue = formattedValue.substring(
         0,
@@ -14,8 +18,13 @@ export function formatDecimal(num) {
     }
     return formattedValue + "k";
   } else {
-    return num.toFixed(1);
+    return num === Math.trunc(num) ? num : num.toFixed(precision);
   }
+}
+
+const numberFormatter = new Intl.NumberFormat();
+export function formatLongDecimal(num, precision = 1) {
+  return numberFormatter.format(num);
 }
 
 import Link from "next/link";

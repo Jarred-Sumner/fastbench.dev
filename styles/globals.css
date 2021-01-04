@@ -404,6 +404,70 @@ h3 {
   );
 }
 
+.SnippetContainer {
+  position: relative;
+}
+
+.SnippetContainer .SnippetBackground {
+  display: none;
+}
+
+.SnippetBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  z-index: 0;
+  -webkit-user-select: none;
+  user-select: none;
+  pointer-events: none;
+  height: 100%;
+  transform-origin: left;
+  transform: scaleX(0.25);
+  content: "";
+  background-color: var(--color-brand);
+  transition: transform 0.12s linear;
+}
+
+.SnippetOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  z-index: 9999;
+  display: flex;
+  margin: auto 0;
+  -webkit-user-select: none;
+  user-select: none;
+  align-items: center;
+
+  pointer-events: none;
+  height: 100%;
+  transform-origin: left;
+
+  padding: 16px 34px;
+}
+
+.SnippetOverlayLabel {
+  font-size: 2rem;
+  color: black;
+  text-shadow: 0px 0px 1px white;
+  filter: contrast(200%);
+}
+
+.SnippetOverlayLabel-unit {
+  color: #333;
+  text-shadow: none;
+}
+
+.SnippetContainer--isRunning .SnippetBackground {
+  display: block;
+}
+
 .NewSnippetContainer,
 .SnippetContainer {
   transition: background-color 0.1s linear;
@@ -442,6 +506,11 @@ h3 {
   grid-column-gap: 0;
 }
 
+.SnippetTitleContainer {
+  position: relative;
+  z-index: 10;
+}
+
 @media (max-width: 1152px) {
   :root {
     --page-width: 800px;
@@ -469,6 +538,10 @@ h3 {
 .NewSnippetContainer,
 .SnippetContainer {
   background-color: var(--snippets_container-background);
+}
+
+.SnippetContainer--isRunning {
+  background-color: var(--snippets_container-background-unfocused);
 }
 
 .NewSnippetContainer {
