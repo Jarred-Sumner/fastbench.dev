@@ -1,4 +1,5 @@
 import Link from "next/link";
+import classNames from "classnames";
 import { Arrow } from "./Arrow";
 
 export const LinkButton = ({ children, href, disabled = false }) => {
@@ -13,9 +14,20 @@ export const LinkButton = ({ children, href, disabled = false }) => {
   );
 };
 
-export const FakeLinkButton = ({ children, onClick, disabled = false }) => {
+export const FakeLinkButton = ({
+  children,
+  gray = false,
+  onClick,
+  disabled = false,
+}) => {
   return (
-    <div onClick={onClick} disabled={disabled} className="LinkButton">
+    <div
+      onClick={onClick}
+      disabled={disabled}
+      className={classNames("LinkButton", {
+        "LinkButton--gray": gray,
+      })}
+    >
       <span className={"LinkButton-text"}>{children}</span>
 
       <Arrow className={"LinkButton-arrow"} />

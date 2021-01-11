@@ -329,6 +329,7 @@ h3 {
   margin-left: 6px;
 }
 
+.ResultListSection,
 .BenchmarkHeader,
 .SnippetList,
 .CodeEditor {
@@ -362,11 +363,16 @@ h3 {
   border-bottom: 1px solid transparent;
   color: white;
 }
-.TitleInput:hover {
+
+.TitleInput-container--readOnly .TitleInput,
+.TitleInput-container--readOnly .TitleInput:hover {
+  cursor: pointer;
+}
+.TitleInput-container--readWrite .TitleInput:hover {
   border-bottom-color: var(--color-brand-muted);
 }
 
-.TitleInput:focus {
+.TitleInput-container--readWrite .TitleInput:focus {
   border-bottom-color: var(--color-brand);
 }
 
@@ -410,6 +416,30 @@ h3 {
 
 .SnippetContainer {
   position: relative;
+}
+
+.SnippetContainer-ErrorTitle {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(150, 2, 0, 0.5);
+  backdrop-filter: blur(2px);
+  padding: 6px 8px;
+}
+
+.SnippetContainer-ErrorClose {
+  position: absolute;
+  bottom: -5px;
+  right: 3px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 12px;
+  transition: transform 0.1s linear;
+}
+
+.SnippetContainer-ErrorClose:hover {
+  transform: scale(1.25);
 }
 
 .SnippetContainer .SnippetOverlay,
@@ -479,7 +509,7 @@ h3 {
 }
 
 .SnippetContainer--ran .CodeContainer {
-  filter: blur(1px);
+  filter: none;
 }
 
 .SnippetContainer--ran .SnippetOverlayLabel {
@@ -522,13 +552,18 @@ h3 {
   margin-left: auto;
 }
 
-.SnippetIndexIcon {
+.SnippetIndexIcon,
+.SnippetRank {
   text-transform: uppercase;
   font-family: var(--heading-font);
   font-size: 1.1rem;
   text-align: left;
   margin-left: 21px;
   margin-right: 1ch;
+}
+
+.SnippetRank--first {
+  color: var(--color-brand);
 }
 
 .NewSnippetContainer:hover,
@@ -587,4 +622,120 @@ h3 {
 
 .NewSnippetContainer {
   cursor: pointer;
+}
+
+.SnippetHeading-subheader {
+  display: grid;
+  grid-template-columns: auto auto auto auto auto;
+  grid-column-gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1.35px;
+  padding-left: 54px;
+  margin-top: -12px;
+  color: inherit;
+  padding-bottom: 16px;
+}
+
+.SnipptHeading-Dot {
+}
+
+.xIcon {
+  text-transform: lowercase;
+}
+
+.SnippetHeading--first {
+  color: var(--color-brand);
+}
+
+.SnippetHeading--notFirst {
+  color: rgb(153, 153, 153);
+}
+
+.ResultListSection {
+}
+
+.ResultListSection {
+  margin-bottom: 1rem;
+}
+.ResultListSection--heading {
+  font-size: 1.5rem;
+  color: white;
+  font-family: var(--heading-font);
+}
+.ResultListSection--subHeading {
+  color: rgb(153, 153, 153);
+  display: grid;
+  grid-template-columns: min-content min-content auto;
+  grid-column-gap: 8px;
+  margin-bottom: 16px;
+}
+.ResultListSection--subHeading--section {
+}
+.ResultListSection--subHeading--separator {
+}
+.ResultListSection--results {
+  display: grid;
+  grid-row-gap: 20px;
+}
+
+.ResultLongListItem--notFirst {
+  color: white;
+}
+
+.ResultLongListItem--first {
+  color: var(--color-brand);
+}
+
+.ResultLongListItem--first {
+}
+.ResultLongListItem--notFirst {
+}
+.ResultLongListItem-line {
+  display: flex;
+}
+
+.ResultLongListItem {
+  margin-bottom: 24px;
+}
+.ResultLongListItem-name {
+  color: rgb(153, 153, 153);
+}
+
+.ResultLongListItem--first .ResultLongListItem-name,
+.ResultLongListItem--first .ResultLongListItem-progressBar {
+  color: var(--color-brand);
+}
+
+.ResultLongListItem-multiplier {
+}
+.ResultLongListItem-progressBarContainer {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+.ResultLongListItem-progressBar {
+}
+.ResultLongListItem-statGroup {
+  display: grid;
+  width: 400px;
+  grid-template-columns: 300px 100px;
+  grid-column-gap: 0;
+  align-items: center;
+
+  font-size: 2rem;
+  white-space: nowrap;
+  padding-right: 28px;
+}
+
+.ResultLongListItem-progressBar,
+.ResultLongListItem-progressBarContainer {
+  height: 3px;
+  content: "";
+}
+
+.ResultLongListItem-progressBar {
+  background-color: currentColor;
+}
+
+.ResultLongListItem-progressBarContainer {
+  width: 100%;
 }

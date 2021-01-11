@@ -6,12 +6,19 @@ import {
 import { TitleInput } from "../src/components/TitleInput";
 import * as React from "react";
 import { FakeLinkButton } from "../src/components/LinkButton";
-import { SharedIcon } from "../src/components/SharedIcon";
-import { PlusIcon } from "../src/components/PlusIcon";
 import { Snippet } from "../src/lib/Snippet";
 import { Benchmark } from "../src/lib/Benchmark";
 import { BenchmarkRunner } from "../src/lib/BenchmarkRunner";
-import BenchmarkWorker from "../src/BenchmarkWorker.worker";
+
+import { SnippetList } from "src/components/SnippetList";
+import {
+  loadWorkers,
+  unloadWorkers,
+  WorkerType,
+} from "src/lib/BenchmarkRunnerWorker";
+import { BenchmarkResult } from "src/lib/SnippetResult";
+import { ResultList } from "src/components/ResultsList";
+import { useRouter } from "next/router";
 
 let SAMPLE_DATA;
 
@@ -25,23 +32,11 @@ if (process.env.NODE_ENV === "production") {
   ];
 }
 
-const SnippetIndexIcon = ({ children }) => (
-  <div className={"SnippetIcon SnippetIndexIcon"}>{children}</div>
-);
-
-const NewSnippetButton = ({ onClick }) => (
-  <div onClick={onClick} className={"NewSnippetContainer"}>
-    <PlusIcon className={"SnippetIcon NewSnippetContainer-icon"} />
-
-    <div className={"NewSnippetContainer-label"}>ADD SNIPPET</div>
-  </div>
-);
-
-async function uploadBenchmark(benchmark: Benchmark) {
+async function uploadBenchmark(benchmark: Benchmark, results) {
   return globalThis
     .fetch(`/api/snippets`, {
       method: "POST",
-      body: JSON.stringify({ benchmark: benchmark.toJSON() }),
+      body: JSON.stringify({ benchmark: benchmark.toJSON(), results }),
       headers: {
         "Content-Type": "application/json",
       },
@@ -49,33 +44,31 @@ async function uploadBenchmark(benchmark: Benchmark) {
     .then((resp) => resp.json());
 }
 
-const loadWorkers = () => {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  let pool;
-  if (typeof navigator.hardwareConcurrency === "number") {
-    pool = new Array(Math.ceil(navigator.hardwareConcurrency / 2));
-  } else {
-    pool = new Array(3);
-  }
-
-  for (let i = 0; i < pool.length; i++) {
-    pool[i] = new BenchmarkWorker({
-      type: "module",
-    });
-    pool[i].name = `Benchmarker #${i}`;
-  }
-  return pool;
-};
-
 export const NewBenchmarkPage = () => {
   const [title, setTitle] = React.useState("");
   const [versionKey, setVersionKey] = React.useState(0);
+  const [workerType, setWorkerType] = React.useState<WorkerType>(
+    WorkerType.inline
+  );
+
   const [focusedId, setFocusedID] = React.useState(null);
-  const workers = React.useRef<Worker[]>(loadWorkers());
+
+  const workers = React.useRef<Worker[]>(null);
+  React.useEffect(() => {
+    if (workers?.current?.length) {
+      unloadWorkers(workers.current);
+    }
+    workers.current = loadWorkers(
+      workerType === WorkerType.worker ? 6 : 1,
+      workerType
+    );
+  }, [workers, workerType]);
+
   const [runState, setRunState] = React.useState(SnippetRunState.pending);
+  const [
+    benchmarkResult,
+    setBenchmarkResult,
+  ] = React.useState<BenchmarkResult>();
 
   const [runner, setRunner] = React.useState<BenchmarkRunner>(
     () => new BenchmarkRunner()
@@ -88,12 +81,6 @@ export const NewBenchmarkPage = () => {
     [setTitle]
   );
 
-  const incrementVersionKey = () =>
-    setVersionKey((id) => {
-      id++;
-      return id;
-    });
-
   const [sharedSnippet, setSharedSnippet] = React.useState(() =>
     Snippet.shared(...SAMPLE_DATA[0])
   );
@@ -103,109 +90,26 @@ export const NewBenchmarkPage = () => {
     Snippet.create(...SAMPLE_DATA[2]),
   ]);
 
-  const updateCode = React.useCallback(
-    (code: string, id: string) => {
-      let snippet: Snippet;
-      for (let _snippet of snippets) {
-        if (_snippet.id === id) {
-          snippet = _snippet;
-          break;
-        }
-      }
-
-      if (!snippet) {
-        throw `Missing snippet for id ${id}`;
-      }
-
-      snippet.code = code;
-      setRunState(SnippetRunState.pending);
-    },
-    [snippets, setRunState]
-  );
-
-  const progressUpdateRefs = React.useMemo(() => {
-    return [
-      snippets.map(() => React.createRef()),
-      snippets.map(() => React.createRef()),
-    ];
-  }, [snippets, snippets.length]);
+  const [errors, setErrors] = React.useState(() => new Array(snippets.length));
 
   React.useEffect(() => {
-    runner.progressBarRefs = progressUpdateRefs[0];
-    runner.opsRefs = progressUpdateRefs[1];
-  }, [progressUpdateRefs, runner]);
-
-  const updateTitle = React.useCallback(
-    (title: string, id: string) => {
-      let snippet: Snippet;
-      for (let _snippet of snippets) {
-        if (_snippet.id === id) {
-          snippet = _snippet;
-          break;
-        }
-      }
-
-      if (!snippet) {
-        throw `Missing snippet for id ${id}`;
-      }
-
-      snippet.name = title;
-    },
-    [snippets]
-  );
-
-  const addSnippet = React.useCallback(() => {
-    setSnippets((snippets) => {
-      const _snippets = snippets.slice();
-
-      _snippets.push(Snippet.create());
-      return _snippets;
+    setErrors(() => {
+      const errors = new Array(snippets.length);
+      errors.fill(null);
     });
-    setRunState(SnippetRunState.pending);
-  }, [setSnippets, Snippet.create, setRunState]);
+  }, [setErrors, snippets, snippets.length]);
 
-  const renderSnippetContainer = React.useCallback(
-    (snippet: Snippet, index: number) => {
-      return (
-        <SnippetContainer
-          key={snippet.id + "-" + focusedId}
-          title={snippet.name}
-          placeholder={"Untitled snippet"}
-          progressUpdateRef={progressUpdateRefs[0][index]}
-          overlayRef={progressUpdateRefs[1][index]}
-          onChangeTitle={updateTitle}
-          focusedId={focusedId}
-          onFocus={setFocusedID}
-          onBlur={setFocusedID}
-          code={snippet.code}
-          runState={runState}
-          codePlaceholder={"Insert JavaScript benchmark code in here."}
-          onChangeCode={updateCode}
-          id={snippet.id}
-          icon={
-            <SnippetIndexIcon>
-              {String.fromCharCode((index % 26) + 65)}
-            </SnippetIndexIcon>
-          }
-        />
-      );
-    },
-    [
-      snippets.length,
-      snippets,
-      focusedId,
-      updateCode,
-      setFocusedID,
-      updateTitle,
-      progressUpdateRefs,
-      runState,
-    ]
-  );
+  const results = React.useMemo(() => {
+    return snippets.length && benchmarkResult
+      ? benchmarkResult.toResults(snippets)
+      : [];
+  }, [benchmarkResult, snippets, snippets.length]);
 
-  const onChangeSharedSnippet = React.useCallback(
-    (code) => (sharedSnippet.code = code),
-    [sharedSnippet]
-  );
+  const onCancelTest = React.useCallback(() => {
+    runner.cancel();
+  }, [runner]);
+
+  const router = useRouter();
 
   const onRunTest = React.useCallback(() => {
     setRunState(SnippetRunState.running);
@@ -215,40 +119,67 @@ export const NewBenchmarkPage = () => {
       _benchmark.name = _benchmark.snippets.map((s) => s.name).join(" vs ");
     }
     console.time("Completed test run");
+    _benchmark.workerType = workerType;
     runner.run(_benchmark, workers.current).then(
       (results) => {
+        setErrors(runner.errorData.slice());
         console.timeEnd("Completed test run");
-        runner.cleanup();
-        setRunState(SnippetRunState.ran);
-        uploadBenchmark(_benchmark).then(
-          ({ value: benchmark, error, message }) => {
-            if (error) {
-              alert(message);
-              return;
+        if (runner.canSave) {
+          setBenchmarkResult(
+            BenchmarkResult.createFromJSON(
+              _benchmark.id || Math.random().toString(10),
+              navigator.userAgent,
+              results
+            )
+          );
+          runner.cleanup();
+          setRunState(SnippetRunState.ran);
+          uploadBenchmark(_benchmark, results).then(
+            ({ value: benchmark, error, message }) => {
+              if (error) {
+                alert(message);
+                return;
+              }
+              router.replace(
+                "/[id]/[version]",
+                benchmark.url.replace("https://fastbench.dev", "")
+              );
             }
-            console.log(benchmark);
-            debugger;
-          }
-        );
+          );
+        } else {
+          setRunState(SnippetRunState.pending);
+          runner.cleanup();
+        }
       },
       (err) => {
+        console.timeEnd("Completed test run");
+        for (let [id, isFinished] of runner.finishedSnippets.entries()) {
+          if (!isFinished) {
+            runner.errorData[id] = err;
+            break;
+          }
+        }
+        console.error(err);
+        globalThis.onerror = null;
+        setErrors(runner.errorData);
+        setBenchmarkResult(null);
         setRunState(SnippetRunState.pending);
         console.error(err);
         runner.cleanup();
       }
     );
-
-    // debugger;
-    //
-    // uploadBenchmark(_benchmark).then(({ value: benchmark, error, message }) => {
-    //   if (error) {
-    //     alert(message);
-    //     return;
-    //   }
-    //   console.log(benchmark);
-    //   debugger;
-    // });
-  }, [snippets, sharedSnippet, title, workers, runner, setRunState]);
+  }, [
+    snippets,
+    sharedSnippet,
+    setErrors,
+    router,
+    title,
+    setBenchmarkResult,
+    workers,
+    runner,
+    setRunState,
+    workerType,
+  ]);
 
   return (
     <div className={"Page NewBenchmarkPage"}>
@@ -263,26 +194,36 @@ export const NewBenchmarkPage = () => {
           />
 
           <div className={"RunTestButtonContainer"}>
-            <FakeLinkButton onClick={onRunTest}>Run test</FakeLinkButton>
+            {runState !== SnippetRunState.running ? (
+              <FakeLinkButton onClick={onRunTest}>Run test</FakeLinkButton>
+            ) : (
+              <FakeLinkButton gray onClick={onCancelTest}>
+                Cancel
+              </FakeLinkButton>
+            )}
           </div>
         </div>
 
-        <div className={"SnippetList"}>
-          <SnippetContainer
-            disableTitle
-            icon={<SharedIcon className={"SnippetIcon"} />}
-            placeholder={"Shared code"}
-            code={sharedSnippet.code}
-            onChangeCode={onChangeSharedSnippet}
-            codePlaceholder={
-              "Insert JavaScript code that runs before all benchmarks in here"
-            }
+        {benchmarkResult && (
+          <ResultList
+            snippets={snippets}
+            resultIndex={0}
+            result={benchmarkResult}
           />
+        )}
 
-          {snippets.map(renderSnippetContainer)}
-
-          <NewSnippetButton onClick={addSnippet} />
-        </div>
+        <SnippetList
+          runState={runState}
+          setRunState={setRunState}
+          results={results}
+          errors={errors}
+          sharedSnippet={sharedSnippet}
+          focusedId={focusedId}
+          setFocusedID={setFocusedID}
+          snippets={snippets}
+          setSnippets={setSnippets}
+          runner={runner}
+        />
       </div>
     </div>
   );

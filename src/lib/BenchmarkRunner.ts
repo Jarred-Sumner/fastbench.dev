@@ -4,15 +4,74 @@ import * as BenchmarkJS from "benchmark";
 import { filter } from "./BenchmarkFilter";
 import React from "react";
 import { formatDecimal, formatLongDecimal } from "../components/ResultCard";
+import { BenchmarkResult } from "src/lib/SnippetResult";
 
 const TEN_SECONDS = 10_000;
+
+// Allow this function to be JIT'd.
+// TODO: use CSS Typed Objects.
+function performUpdate(
+  progressEl: HTMLDivElement,
+  operationsBarEl: HTMLDivElement,
+  progressValue: number,
+  operationsValue: string
+) {
+  progressEl.style.transform = `scaleX(${
+    progressValue < 1 ? progressValue : 1
+  })`;
+  operationsBarEl.textContent = operationsValue;
+}
+
+class ProgressUpdater {
+  progressEl: React.RefObject<HTMLDivElement>;
+  operationsBarEl: React.RefObject<HTMLDivElement>;
+  progressValue: number;
+  operationsValue: string;
+  token: number;
+
+  static dispose(updater: ProgressUpdater) {
+    if (updater.token) {
+      globalThis.cancelAnimationFrame(updater.token);
+    }
+    updater.progressEl = updater.operationsBarEl = null;
+  }
+
+  update = () => {
+    if (!this.progressEl?.current || !this.operationsBarEl?.current) {
+      return;
+    }
+
+    performUpdate(
+      this.progressEl.current,
+      this.operationsBarEl.current,
+      this.progressValue,
+      this.operationsValue
+    );
+  };
+
+  schedule(progressValue: number, operationsValue: string) {
+    this.progressValue = progressValue;
+    this.operationsValue = operationsValue;
+    this.token = globalThis.requestAnimationFrame(this.update);
+  }
+}
+
 export class BenchmarkRunner {
   snippetIdMap = new Map<number, number>();
 
   benchmark: Benchmark;
-  worker: Worker;
+  worker: Worker | MessagePort;
   snippetData = [];
+  errorData = [];
   finishedSnippets = new Map<number, boolean>();
+
+  progressBarUpdaters: Array<ProgressUpdater> = [];
+  createProgressBarUpdater(snippetIndex: number) {
+    const updater = new ProgressUpdater();
+    updater.progressEl = this.progressBarRefs[snippetIndex];
+    updater.operationsBarEl = this.opsRefs[snippetIndex];
+    return updater;
+  }
 
   *nextPendingSnippet() {
     for (let i = 0; i < this.benchmark.snippets.length; i++) {
@@ -30,20 +89,11 @@ export class BenchmarkRunner {
     }
   }
 
-  updateProgressBar(
-    progress: number,
-    _operations: number,
-    progressBar: React.RefObject<HTMLDivElement>,
-    operationsBar: React.RefObject<HTMLDivElement>
-  ) {
-    let el = progressBar.current;
-    let _el = operationsBar.current;
-    let operations = Math.trunc(_operations);
-    requestAnimationFrame(() => {
-      el.style.transform = `scaleX(${progress < 1 ? progress : 1})`;
-      el = null;
-      _el.textContent = formatLongDecimal(operations).toString();
-    });
+  updateProgressBar(snippetIndex: number, progress: number, ops: number) {
+    this.progressBarUpdaters[snippetIndex].schedule(
+      progress,
+      formatLongDecimal(Math.trunc(ops)).toString()
+    );
   }
 
   onMessageEvent = ({
@@ -60,12 +110,14 @@ export class BenchmarkRunner {
 
     switch (type) {
       case MessageType.complete: {
-        this.updateProgressBar(
-          1.0,
-          this.snippetData[snippetIndex].hz,
-          this.progressBarRefs[snippetIndex],
-          this.opsRefs[snippetIndex]
-        );
+        if (this.snippetData[snippetIndex]) {
+          this.updateProgressBar(
+            snippetIndex,
+            1.0,
+            this.snippetData[snippetIndex].hz
+          );
+        }
+
         this.finishedSnippets.set(snippetIndex, true);
         this.busyWorkers.set(target || srcElement, false);
         this.continueBenchmark();
@@ -78,12 +130,13 @@ export class BenchmarkRunner {
       }
 
       case MessageType.progressUpdate: {
-        this.updateProgressBar(
-          value[3] / TEN_SECONDS,
-          value[2],
-          this.progressBarRefs[snippetIndex],
-          this.opsRefs[snippetIndex]
-        );
+        if (!this.finishedSnippets.get(snippetIndex)) {
+          this.updateProgressBar(
+            snippetIndex,
+            value[3] / TEN_SECONDS,
+            value[2]
+          );
+        }
 
         break;
       }
@@ -99,8 +152,6 @@ export class BenchmarkRunner {
 
   get isFinished() {
     for (let i = 0; i < this.benchmark.snippets.length; i++) {
-      const snippet = this.benchmark.snippets[i];
-
       if (!this.finishedSnippets.get(i)) {
         return false;
       }
@@ -123,15 +174,12 @@ export class BenchmarkRunner {
     const currentSnippetIndex = this.nextPendingSnippet().next().value;
     const worker: Worker = this.nextWorker().next().value;
     let currentId = Math.random();
-    this.updateProgressBar(
-      0,
-      0,
-      this.progressBarRefs[currentSnippetIndex],
-      this.opsRefs[currentSnippetIndex]
-    );
+    this.updateProgressBar(currentSnippetIndex, 0, 0);
     this.snippetIdMap.set(currentId, currentSnippetIndex);
-    this.busyWorkers.set(worker, true);
+    this.busyWorkers.set(worker, currentId);
     this.finishedSnippets.set(currentSnippetIndex, false);
+
+    globalThis.onerror = this.errorEvents.get(worker);
     worker.postMessage({
       type: MessageType.start,
       id: currentId,
@@ -143,15 +191,40 @@ export class BenchmarkRunner {
   }
 
   getResults() {
-    const finishedSnippets = this.snippetData.filter(Boolean);
-    const fastest = filter(finishedSnippets, "fastest")[0];
-    const slowest = filter(finishedSnippets, "slowest")[0];
+    const finishedSnippets = this.snippetData
+      .filter((value, index) => !this.errorData[index])
+      .filter(Boolean);
+    return finishedSnippets.map((data) => ({
+      id: this.benchmark.snippets[this.snippetData.indexOf(data)].id,
+      result: data,
+    }));
+  }
 
-    return {
-      results: this.snippetData,
-      fastest: this.snippetData.indexOf(fastest),
-      slowest: this.snippetData.indexOf(slowest),
-    };
+  getLocalResults() {
+    return BenchmarkResult.createFromJSON(
+      this.benchmark.id,
+      globalThis.navigator.userAgent,
+      this.getResults()
+    );
+  }
+
+  get hasErrors() {
+    return this.errorData.filter(Boolean).length > 0;
+  }
+
+  get canSave() {
+    return !this.hasErrors && this.getResults().length > 0;
+  }
+
+  cancel() {
+    for (let worker of this.workers) {
+      if (this.busyWorkers.get(worker)) {
+        worker.postMessage({
+          type: MessageType.cancel,
+        });
+      }
+    }
+    this.finish({ cancel: true });
   }
 
   finish(error) {
@@ -165,25 +238,41 @@ export class BenchmarkRunner {
   }
   cleanup() {
     for (let worker of this.workers) {
-      worker.onmessage = null;
-      worker.onerror = null;
+      worker.removeEventListener("message", this.onMessageEvent);
+      worker.removeEventListener("error", this.errorEvents.get(worker));
+      this.errorEvents.delete(worker);
       this.busyWorkers.delete(worker);
     }
 
+    globalThis.onerror = this.origOnError;
     this.benchmark = this.workers = null;
     this.snippetIdMap.clear();
+    this.progressBarUpdaters.forEach(ProgressUpdater.dispose);
+    this.progressBarUpdaters.length = 0;
     this.finishedSnippets.clear();
     this.snippetData.length = 0;
   }
 
-  onErrorEvent = (event: ErrorEvent) => {
-    this.finish(event.error);
+  onErrorEvent = (worker) => (event: ErrorEvent) => {
+    if (!event) {
+      return;
+    }
+
+    let error = event?.error;
+    if (typeof event === "string") {
+      error = new Error(event);
+    }
+    this.errorData[this.busyWorkers.get(worker)] = error;
+    this.busyWorkers.delete(worker);
+
+    this.finish(error);
   };
 
   finishResolver = null;
   finishRejecter = null;
   workers: Worker[];
-  busyWorkers = new WeakMap<Worker, boolean>();
+  busyWorkers = new WeakMap<Worker, number>();
+  errorEvents = new WeakMap<Worker, Function>();
 
   progressBarRefs = new Array<React.Ref<HTMLDivElement>>();
   opsRefs = new Array<React.Ref<HTMLDivElement>>();
@@ -191,14 +280,23 @@ export class BenchmarkRunner {
   run(benchmark: Benchmark, workerPool: Worker[]) {
     this.benchmark = benchmark;
     this.workers = workerPool;
-    this.snippetData.length = benchmark.snippets.length;
+    this.errorData.length = this.progressBarUpdaters.length = this.snippetData.length =
+      benchmark.snippets.length;
     this.snippetData.fill(null);
+    this.errorData.fill(null);
+
+    for (let i = 0; i < this.benchmark.snippets.length; i++) {
+      this.progressBarUpdaters[i] = this.createProgressBarUpdater(i);
+      this.progressBarUpdaters[i].schedule(0, "0");
+    }
 
     return new Promise((resolve, reject) => {
       for (let worker of this.workers) {
-        this.busyWorkers.set(worker, false);
-        worker.onmessage = this.onMessageEvent;
-        worker.onerror = this.onErrorEvent;
+        let errFunc = this.onErrorEvent(worker);
+        this.errorEvents.set(worker, errFunc);
+        this.busyWorkers.delete(worker);
+        worker.addEventListener("message", this.onMessageEvent);
+        worker.addEventListener("error", errFunc);
       }
 
       this.finishResolver = resolve;

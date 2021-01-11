@@ -4,8 +4,18 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "compile-kiwi": "kiwic --schema src/lib/schema.kiwi --js src/lib/schema.js --ts src/lib/schema.d.ts --binary src/lib/schema.kiwib",
+    "prebuild": "node buildIframe.js",
     "build": "next build",
     "start": "next start"
+  },
+  "browser": {
+    "path": "path-browserify"
+  },
+  "browserslist": {
+    "chrome": "last 2 versions",
+    "firefox": "last 2 versions",
+    "safari": "last 2 versions"
   },
   "dependencies": {
     "@octokit/rest": "^18.0.12",
@@ -15,16 +25,22 @@
     "benchmark": "^2.1.4",
     "bowser": "^2.11.0",
     "classnames": "^2.2.6",
-    "esbuild": "^0.8.26",
+    "esbuild": "^0.8.31",
     "filenamify": "^4.2.0",
+    "kiwi-schema": "^0.4.7",
+    "lodash": "^4.17.20",
+    "lodash-es": "^4.17.20",
     "nanoid": "^3.1.20",
     "next": "10.0.4",
     "node-fetch": "^2.6.1",
+    "path-browserify": "^1.0.1",
+    "platform": "^1.3.6",
     "react": "17.0.1",
     "react-ace": "^9.2.1",
     "react-dom": "17.0.1",
     "shortid": "^2.2.16",
     "slugify": "^1.4.6",
+    "url-loader": "^4.1.1",
     "worker-loader": "^3.0.7"
   },
   "devDependencies": {

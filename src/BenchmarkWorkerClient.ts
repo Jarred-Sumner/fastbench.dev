@@ -1,9 +1,21 @@
 import { MessageType, StatusMessageType } from "src/WorkerMessage";
 import { transformSync } from "esbuild";
-import { Suite } from "benchmark";
 import { Benchmark } from "./lib/Benchmark";
+import type { default as BenchmarkType } from "benchmark";
+import { DH_NOT_SUITABLE_GENERATOR } from "constants";
 
-let suite: Suite;
+let Suite;
+
+let suite: BenchmarkType.Suite;
+let postMessage;
+
+export function setPostMessageHandler(
+  _postMesasge,
+  _Suite: BenchmarkType.Suite
+) {
+  postMessage = _postMesasge;
+  Suite = _Suite;
+}
 
 let updateLength = Float64Array.BYTES_PER_ELEMENT * 5;
 const updateObject = {
@@ -31,13 +43,12 @@ function startSendingProgressUpdates(id) {
 function sendProgressUpdate() {
   const now = performance.now();
   const stats = suite[0].stats;
-  const elapsed = suite[0].times.elapsed;
   updateObject.value[1] = updateObject.value[0];
   updateObject.value[0] = 1 / (stats.mean + stats.moe);
   updateObject.value[2] = suite[0].hz;
   updateObject.value[3] += now - updateObject.value[4];
   updateObject.value[4] = now;
-  globalThis.postMessage(updateObject);
+  postMessage(updateObject);
 }
 
 function stopProgressUpdates() {
@@ -46,13 +57,16 @@ function stopProgressUpdates() {
   }
   progressInterval = null;
 }
+let statusMessage = {
+  status: 0,
+  type: MessageType.statusUpdate,
+  timestamp: 0,
+};
 
 function emitStatusMessage(status: StatusMessageType) {
-  globalThis.postMessage({
-    status,
-    type: MessageType.statusUpdate,
-    timestamp: performance.now(),
-  });
+  statusMessage.status = status;
+  statusMessage.timestamp = performance.now();
+  postMessage(statusMessage);
 }
 
 function start(
@@ -67,21 +81,29 @@ function start(
   }
 
   emitStatusMessage(StatusMessageType.aboutToStart);
-  let _suite: Suite = new Suite(snippet.name, {
+  let _suite: BenchmarkType.Suite = new Suite(snippet.name, {
     maxTime: 30,
     name: benchmark.name,
-  }).add(snippet.name, snippet.code, {
+  });
+
+  function errorHandler(error) {
+    postMessage({ type: MessageType.error, value: error, id });
+    stopProgressUpdates();
+  }
+
+  _suite.add(snippet.name, snippet.code, {
     setup: benchmark?.shared?.code ?? null,
-    onError: (error) => {
-      globalThis.postMessage({ type: MessageType.error, value: error, id });
-      stopProgressUpdates();
-    },
+    onError: errorHandler,
     onCycle: ({ target: { stats, times, hz, cycles, error } }) => {
-      globalThis.postMessage({
-        type: MessageType.cycle,
-        value: { stats, times, hz, cycles, error: !!error },
-        id,
-      });
+      if (error) {
+        errorHandler(error);
+      } else {
+        postMessage({
+          type: MessageType.cycle,
+          value: { stats, times, hz, cycles, error: false },
+          id,
+        });
+      }
     },
     onComplete: function (complete) {
       if (suite === _suite) {
@@ -89,32 +111,45 @@ function start(
       }
       _suite = null;
       stopProgressUpdates();
-      globalThis.postMessage({
+      postMessage({
         type: MessageType.complete,
         // value: complete,
         id,
       });
     },
     onStart: (...complete) => {
-      globalThis.postMessage({ type: MessageType.start, id });
+      postMessage({ type: MessageType.start, id });
       startSendingProgressUpdates(id);
     },
   });
 
   suite = _suite;
-  _suite.run({ async: true, defer: false });
+  try {
+    _suite.run({ async: true, defer: false });
+  } catch (exception) {
+    errorHandler(exception);
+    return;
+  }
 }
 
-export function processMessage({
-  data: {
-    type,
-    id,
-    value: { benchmark, snippetIndex },
-  },
-}) {
+export function processMessage(event: MessageEvent) {
+  const { type } = event.data;
   switch (type) {
     case MessageType.start: {
+      const {
+        id,
+        value: { benchmark, snippetIndex },
+      } = event.data;
       start(Benchmark.fromJSON(benchmark), snippetIndex, id);
+      break;
+    }
+    case MessageType.cancel: {
+      if (suite) {
+        suite.abort();
+        suite = null;
+      }
+      stopProgressUpdates();
+      break;
     }
   }
 }

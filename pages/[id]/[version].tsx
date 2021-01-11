@@ -1,0 +1,165 @@
+import type { Fetch } from "@vercel/fetch";
+import * as React from "react";
+import { GetStaticPropsContext } from "next";
+import {
+  Benchmark,
+  benchmarkGithubPackagePath,
+  joinBenchmarkURL,
+  RESULTS_FILENAME,
+} from "src/lib/Benchmark";
+import { BenchmarkResult } from "src/lib/SnippetResult";
+import { getMultiplier, Result } from "src/components/ResultCard";
+import { SnippetRunState } from "src/components/SnippetContainer";
+import { PageHeader } from "src/components/PageHeader";
+import { SnippetList } from "src/components/SnippetList";
+import { BenchmarkRunner } from "src/lib/BenchmarkRunner";
+import { FakeLinkButton } from "src/components/LinkButton";
+import { TitleInput } from "src/components/TitleInput";
+import { useRouter } from "next/router";
+import { ResultList } from "src/components/ResultsList";
+
+export type IndexFileType = {
+  timestamp: string;
+  benchmarks: {
+    [key: string]: string[];
+  };
+};
+async function fetchIndexFile(): Promise<IndexFileType> {
+  const resp = await fetch(
+    `https://cdn.jsdelivr.net/gh/Jarred-Sumner/fastbench@master/index.json?t=${Math.floor(
+      Date.now() / 5
+    )}`
+  );
+
+  return resp.json();
+}
+
+function sortResult(a: Result, b: Result) {
+  if (a && b) {
+    return a.operationsPerSecond - b.operationsPerSecond;
+  } else if (a) {
+    return 1;
+  } else if (b) {
+    return -1;
+  } else {
+    return -1;
+  }
+}
+
+export async function getStaticPaths() {
+  // Call an external API endpoint to get posts
+  const indexFile = await fetchIndexFile();
+
+  // Get the paths we want to pre-render based on posts
+  const paths = Object.keys(indexFile.benchmarks)
+    .map((id) => indexFile.benchmarks[id].map((version) => `/${id}/version`))
+    .flat(1);
+
+  // We'll pre-render only these paths at build time.
+  // { fallback: false } means other routes should 404.
+  return { paths, fallback: "blocking" };
+}
+let fetch: Fetch = globalThis.fetch;
+
+if (typeof window === "undefined") {
+  fetch = require("@vercel/fetch")(require("node-fetch"));
+}
+
+export async function getStaticProps(context: GetStaticPropsContext) {
+  const { version, id } = context.params;
+
+  const [benchmarkResp, resultResp] = await Promise.all([
+    fetch(joinBenchmarkURL(id, version, "package.json")),
+    fetch(joinBenchmarkURL(id, version, RESULTS_FILENAME)),
+  ]);
+
+  const benchmark = Benchmark.fromJSON((await benchmarkResp.json()).fastbench);
+
+  const benchmarkResults = BenchmarkResult.fromBlob(
+    new Uint8Array(await resultResp.arrayBuffer())
+  );
+
+  const results = benchmarkResults
+    .toResults(benchmark.snippets)
+    .filter(Boolean)
+    .sort(sortResult);
+
+  for (let i = 0; i < results.length; i++) {
+    if (results[i]) {
+      results[i].rank = i + 1;
+      results[i].multiplier = getMultiplier(
+        results[i],
+        results[results.length - 1]
+      );
+    }
+  }
+
+  return {
+    revalidate: 5,
+    props: {
+      benchmark: benchmark.toJSON(),
+      results,
+      benchmarkResults: JSON.parse(JSON.stringify(benchmarkResults)),
+    }, // will be passed to the page component as props
+  };
+}
+
+export const ViewBenchmarkPage = ({
+  benchmark: _benchmark,
+  results,
+  benchmarkResults: _benchmarkResults,
+}: {
+  results: Result[];
+}) => {
+  const router = useRouter();
+  const benchmark = React.useMemo(() => Benchmark.fromJSON(_benchmark), [
+    _benchmark,
+  ]);
+
+  const benchmarkResults = React.useMemo(
+    () => new BenchmarkResult(_benchmarkResults),
+    [_benchmarkResults]
+  );
+
+  const [runState, setRunState] = React.useState(SnippetRunState.ran);
+  const [runner, setRunner] = React.useState(() => new BenchmarkRunner());
+
+  const onRunTest = React.useCallback(() => {}, [setRunState, runner]);
+
+  return (
+    <div className={"Page NewBenchmarkPage"}>
+      <PageHeader />
+
+      <div className={"NewBenchmarkPageContent"}>
+        <div className={"BenchmarkHeader"}>
+          <TitleInput
+            href={router.asPath}
+            defaultValue={benchmark.name}
+            readOnly
+          />
+
+          <div className={"RunTestButtonContainer"}>
+            <FakeLinkButton onClick={onRunTest}>Re-run test</FakeLinkButton>
+          </div>
+        </div>
+
+        <ResultList
+          snippets={benchmark.snippets}
+          result={benchmarkResults}
+          resultIndex={0}
+        />
+
+        <SnippetList
+          runState={runState}
+          setRunState={setRunState}
+          sharedSnippet={benchmark.shared}
+          snippets={benchmark.snippets}
+          results={results}
+          runner={runner}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default ViewBenchmarkPage;

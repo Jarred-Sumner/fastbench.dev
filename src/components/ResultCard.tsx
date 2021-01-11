@@ -1,12 +1,17 @@
 import classNames from "classnames";
 import * as React from "react";
 
-export function formatDecimal(num, precision = 1) {
+export function formatDecimal(num, precision = 1, includeUnit = true) {
+  if (!Number.isFinite(num)) {
+    return `∞`;
+  }
+
+  let unit: string, value: number | string;
   if (Math.abs(num) > 999_999) {
-    return (
-      (Math.sign(num) * (Math.abs(num) / 1_000_000)).toFixed(precision) + "m"
-    );
+    unit = "m";
+    value = (Math.sign(num) * (Math.abs(num) / 1_000_000)).toFixed(precision);
   } else if (Math.abs(num) > 999) {
+    unit = "k";
     let formattedValue = (Math.sign(num) * (Math.abs(num) / 1000)).toFixed(
       precision
     );
@@ -16,14 +21,30 @@ export function formatDecimal(num, precision = 1) {
         formattedValue.length - ".0".length
       );
     }
-    return formattedValue + "k";
+    value = formattedValue;
   } else {
-    return num === Math.trunc(num) ? num : num.toFixed(precision);
+    value = num === Math.trunc(num) ? num : num.toFixed(precision);
+    unit = "";
+  }
+
+  if (includeUnit) {
+    return `${value}${unit}`;
+  } else {
+    return value.toString();
   }
 }
 
 const numberFormatter = new Intl.NumberFormat();
-export function formatLongDecimal(num, precision = 1) {
+export function formatLongDecimal(_num: number, precision = 1) {
+  if (!Number.isFinite(_num)) {
+    return `∞`;
+  }
+  let num = _num;
+
+  if (num > 10000) {
+    num = Math.trunc(num);
+  }
+
   return numberFormatter.format(num);
 }
 
@@ -33,7 +54,10 @@ import { Arrow } from "./Arrow";
 export type Result = {
   id: string;
   name: string;
+  multiplier: number;
   operationsPerSecond: number;
+  rank: number;
+  error: boolean;
 };
 
 export enum CardColorScheme {
@@ -46,7 +70,7 @@ export const getScore = (result: Result, baseline: Result) =>
   baseline.operationsPerSecond / result.operationsPerSecond;
 
 export const getMultiplier = (result: Result, baseline: Result) =>
-  result.operationsPerSecond / baseline.operationsPerSecond;
+  (result.operationsPerSecond ?? 1) / (baseline.operationsPerSecond ?? 1);
 
 const ResultListItem = ({ name, percent, isFastest, isSlowest }) => (
   <div

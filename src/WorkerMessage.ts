@@ -6,6 +6,7 @@ export enum MessageType {
   statusUpdate = 3,
   cycle = 5,
   progressUpdate = 6,
+  cancel = 7,
 }
 
 export enum ErrorType {

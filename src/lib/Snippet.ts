@@ -9,13 +9,16 @@ export class Snippet {
     id: string = null,
     code: string = "",
     name: string = "",
-    type: SnippetType
+    type: SnippetType,
+    error: Error = null
   ) {
     this.id = id;
     this.code = code;
     this.name = name;
     this.type = type;
+    this.error = error;
   }
+  error: Error;
   id: string | null;
   code: string;
   name: string;

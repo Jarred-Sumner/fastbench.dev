@@ -1,0 +1,36 @@
+struct Stats {
+  float moe;
+  float rme;
+  float sem;
+  float deviation;
+  float mean;
+  float variance;
+}
+
+struct Times {
+  float cycle;
+  float elapsed;
+  float period;
+  uint timeStamp;
+}
+
+message SnippetResult {
+  Stats stats = 1;
+  float[] statsSamples = 2;
+  Times times = 3;
+  float hz = 4;
+  uint cycles = 5;
+  bool error = 6;
+}
+
+message SnippetResultList {
+  string id = 1;
+  string[] userAgents = 2;
+  SnippetResult[] results = 3;
+}
+
+message BenchmarkResults {
+  string benchmarkId = 1;
+  SnippetResultList[] results = 2;
+}
+

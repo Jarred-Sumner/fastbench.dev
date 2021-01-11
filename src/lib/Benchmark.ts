@@ -1,15 +1,33 @@
 import { Snippet } from "./Snippet";
 import slugify from "slugify";
 import path from "path";
+import fetch from "node-fetch";
+import { WorkerType } from "src/lib/BenchmarkRunnerWorker";
 
 const committer = {
   name: "Fastbench",
   email: "example@example.com",
 };
 
-const atob = (a) =>
+export const atob = (a) =>
   globalThis.atob || Buffer.from(a, "base64").toString("binary");
-const btoa = (b) => globalThis.btoa || Buffer.from(b).toString("base64");
+export const btoa = (b) => globalThis.btoa || Buffer.from(b).toString("base64");
+
+export const RESULTS_FILENAME = "results.kiwib";
+
+export function benchmarkResultsURL(slug: string, version: string) {
+  return `https://cdn.jsdelivr.net/gh/${process.env.GITHUB_REPO_OWNER}/${process.env.GITHUB_REPO}@master/${slug}/${version}/${RESULTS_FILENAME}`;
+}
+
+export function joinBenchmarkURL(slug: string, version: string, ...parts) {
+  return `https://cdn.jsdelivr.net/gh/${process.env.GITHUB_REPO_OWNER}/${
+    process.env.GITHUB_REPO
+  }@master/${slug}/${version}/${path.join(...parts)}`;
+}
+
+export function benchmarkGithubPackagePath(slug: string, version: string) {
+  return path.join(slug, String(version), "package.json");
+}
 
 export class Benchmark {
   snippets: Snippet[];
@@ -17,19 +35,21 @@ export class Benchmark {
   name: string;
   id?: string;
   version: number;
-
+  workerType: WorkerType;
   constructor(
     snippets: Snippet[],
     shared: Snippet,
     name: string,
     id?: string,
-    version: number = 0
+    version: number = 0,
+    workerType: WorkerType = WorkerType.inline
   ) {
     this.snippets = snippets;
     this.shared = shared;
     this.name = name;
     this.id = id;
     this.version = parseInt(version, 10) || 0;
+    this.workerType = workerType;
   }
 
   get parentDirectory() {
@@ -42,6 +62,18 @@ export class Benchmark {
 
   get url() {
     return `https://fastbench.dev/${this.basepath}`;
+  }
+
+  get githubURL() {
+    return `https://github.com/${process.env.GITHUB_REPO_OWNER}/${process.env.GITHUB_REPO}/${this.basepath}`;
+  }
+
+  get githubResultsURL() {
+    return benchmarkResultsURL(this.parentDirectory, String(this.version));
+  }
+
+  get resultsPath() {
+    return path.join(this.basepath, "results.kiwib");
   }
 
   isEmpty() {
@@ -95,7 +127,7 @@ export class Benchmark {
         committer,
       };
     }
-    console.log(githubDirectories);
+
     return [githubDirectories, packageJSON];
   }
 
@@ -106,16 +138,18 @@ export class Benchmark {
       name: this.name,
       id: this.id,
       version: this.version,
+      workerType: this.workerType,
     };
   }
 
-  static fromJSON({ snippets, shared, name, id, version }) {
+  static fromJSON({ snippets, shared, name, id, version, workerType }) {
     return new Benchmark(
       snippets.map(Snippet.fromJSON),
       Snippet.fromJSON(shared),
       name,
       id,
-      version
+      version,
+      workerType
     );
   }
 }
