@@ -717,6 +717,7 @@ h3 {
 .ResultLongListItem-statGroup {
   display: grid;
   width: 400px;
+  max-width: var(--page-width);
   grid-template-columns: 300px 100px;
   grid-column-gap: 0;
   align-items: center;
@@ -738,4 +739,22 @@ h3 {
 
 .ResultLongListItem-progressBarContainer {
   width: 100%;
+}
+
+@media (max-width: 600px) {
+  .ResultLongListItem-statGroup {
+    grid-template-columns: 200px 100px;
+  }
+
+  .ResultLonglistItem {
+    margin-top: 12px;
+  }
+
+  .ResultLongListItem-line {
+    flex-direction: column;
+  }
+
+  .ResultLongListItem-statGroup {
+    margin-bottom: 12px;
+  }
 }
