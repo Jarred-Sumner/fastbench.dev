@@ -52,7 +52,7 @@ export async function getStaticPaths() {
 
   // Get the paths we want to pre-render based on posts
   const paths = Object.keys(indexFile.benchmarks)
-    .map((id) => indexFile.benchmarks[id].map((version) => `/${id}/version`))
+    .map((id) => indexFile.benchmarks[id].map((version) => `/${id}/${version}`))
     .flat(1);
 
   // We'll pre-render only these paths at build time.
