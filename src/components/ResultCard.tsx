@@ -70,7 +70,7 @@ export const getScore = (result: Result, baseline: Result) =>
   baseline.operationsPerSecond / result.operationsPerSecond;
 
 export const getMultiplier = (result: Result, baseline: Result) =>
-  (result.operationsPerSecond ?? 1) / (baseline.operationsPerSecond ?? 1);
+  (result?.operationsPerSecond ?? 1) / (baseline?.operationsPerSecond ?? 1);
 
 const ResultListItem = ({ name, percent, isFastest, isSlowest }) => (
   <div

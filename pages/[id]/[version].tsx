@@ -17,6 +17,15 @@ import { FakeLinkButton } from "src/components/LinkButton";
 import { TitleInput } from "src/components/TitleInput";
 import { useRouter } from "next/router";
 import { ResultList } from "src/components/ResultsList";
+import { fetchBenchmark } from "src/lib/fetchBenchmark";
+import {
+  SHARE_CARD_HEIGHT,
+  SHARE_CARD_WIDTH,
+} from "src/components/ShareCardDimensions";
+
+const scheme = process.env.NODE_ENV === "development" ? "http" : "https";
+const domain =
+  process.env.NODE_ENV === "development" ? "localhost:3001" : "fastbench.dev";
 
 export type IndexFileType = {
   timestamp: string;
@@ -32,18 +41,6 @@ async function fetchIndexFile(): Promise<IndexFileType> {
   );
 
   return resp.json();
-}
-
-function sortResult(a: Result, b: Result) {
-  if (a && b) {
-    return a.operationsPerSecond - b.operationsPerSecond;
-  } else if (a) {
-    return 1;
-  } else if (b) {
-    return -1;
-  } else {
-    return -1;
-  }
 }
 
 export async function getStaticPaths() {
@@ -66,40 +63,17 @@ if (typeof window === "undefined") {
 }
 
 export async function getStaticProps(context: GetStaticPropsContext) {
-  const { version, id } = context.params;
-
-  const [benchmarkResp, resultResp] = await Promise.all([
-    fetch(joinBenchmarkURL(id, version, "package.json")),
-    fetch(joinBenchmarkURL(id, version, RESULTS_FILENAME)),
-  ]);
-
-  const benchmark = Benchmark.fromJSON((await benchmarkResp.json()).fastbench);
-
-  const benchmarkResults = BenchmarkResult.fromBlob(
-    new Uint8Array(await resultResp.arrayBuffer())
+  const { benchmark, results, benchmarkResults } = await fetchBenchmark(
+    context.params.version,
+    context.params.id
   );
-
-  const results = benchmarkResults
-    .toResults(benchmark.snippets)
-    .filter(Boolean)
-    .sort(sortResult);
-
-  for (let i = 0; i < results.length; i++) {
-    if (results[i]) {
-      results[i].rank = i + 1;
-      results[i].multiplier = getMultiplier(
-        results[i],
-        results[results.length - 1]
-      );
-    }
-  }
 
   return {
     revalidate: 5,
     props: {
       benchmark: benchmark.toJSON(),
       results,
-      benchmarkResults: JSON.parse(JSON.stringify(benchmarkResults)),
+      benchmarkResults: JSON.parse(JSON.stringify(benchmarkResults, null, 2)),
     }, // will be passed to the page component as props
   };
 }
@@ -148,6 +122,20 @@ export const ViewBenchmarkPage = ({
           result={benchmarkResults}
           resultIndex={0}
         />
+
+        <div className="ShareSheet">
+          <div className="ShareHeader">Share scorecard</div>
+          <div className="ShareHeader-urlBox">
+            <div className="ShareHeader-url">
+              [https://fastbench.dev/{router.query.id}/{router.query.version}]
+            </div>
+          </div>
+          <img
+            src={`${scheme}://${domain}/${router.query.id}/${router.query.version}.svg`}
+            height={SHARE_CARD_HEIGHT}
+            width={SHARE_CARD_WIDTH}
+          />
+        </div>
 
         <SnippetList
           runState={runState}

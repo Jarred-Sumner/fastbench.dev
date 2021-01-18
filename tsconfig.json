@@ -13,7 +13,8 @@
     "esModuleInterop": true,
     "typeRoots": ["types"],
     "paths": {
-      "lodash": ["lodash-es"]
+      "lodash": ["lodash-es"],
+      "stretch-layout": ["./inline-pkgs/stretch-layout"]
     },
 
     "module": "esnext",

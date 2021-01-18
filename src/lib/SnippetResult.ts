@@ -106,8 +106,6 @@ export class BenchmarkResult implements SchemaBenchmarkResults {
       );
     }
 
-    debugger;
-
     return benchmarkResult;
   }
 

@@ -3,6 +3,14 @@ const path = require("path");
 module.exports = {
   typescript: { ignoreBuildErrors: true },
   experimental: { modern: true },
+  async rewrites() {
+    return [
+      {
+        source: "/:id/:version.:format",
+        destination: "/api/[id]/[version]/i/[format]",
+      },
+    ];
+  },
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     config.output.globalObject = "this";
     if (!config.module.noParse) {

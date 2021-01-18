@@ -587,6 +587,24 @@ h3 {
   z-index: 10;
 }
 
+.ShareHeader {
+  font-family: var(--heading-font);
+  font-size: 1.5rem;
+  color: white;
+}
+
+.ShareHeader-urlBox {
+  display: flex;
+  padding: 8px 12px;
+  max-width: 300px;
+  overflow-x: hidden;
+  white-space: nowrap;
+}
+.ShareHeader-url {
+  font-size: 1rem;
+  color: rgb(153, 153, 153);
+}
+
 @media (max-width: 1152px) {
   :root {
     --page-width: 800px;
