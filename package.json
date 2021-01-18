@@ -8,7 +8,7 @@
     "prebuild": "node buildIframe.js",
     "build": "next build",
     "start": "next start",
-    "vercel-build": "yum install libuuid-devel libmount-devel && cp /lib64/{libuuid,libmount,libblkid}.so.1 node_modules/canvas/build/Release/ && yarn build"
+    "postbuild": "yum install libuuid-devel libmount-devel && cp /lib64/{libuuid,libmount,libblkid}.so.1 node_modules/canvas/build/Release/"
   },
   "browser": {
     "path": "path-browserify"
