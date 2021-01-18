@@ -25,6 +25,11 @@ module.exports = {
       use: { loader: "worker-loader" },
     });
 
+    config.module.rules.push({
+      test: /\.ttf$/,
+      use: { loader: "file-loader" },
+    });
+
     return config;
   },
 };
