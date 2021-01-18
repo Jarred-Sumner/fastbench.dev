@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import ReactDOM from "react-dom/server";
-import fixture from "src/components/fixture";
 import * as React from "react";
 import fontList from "src/fontList";
 import path from "path";
@@ -12,6 +11,7 @@ import {
   SHARE_CARD_HEIGHT,
   SHARE_CARD_WIDTH,
 } from "src/components/ShareCardDimensions";
+import fs from "fs";
 
 let ShareCard;
 
@@ -109,10 +109,8 @@ const renderShareCardSVG = async (results, baseline, fastest, title) => {
       const fontDescriptor = fontList.find((font) => {
         return font.weight === weight && font.family === family;
       });
-      console.log(family, weight, size);
-      const font = await OpenType.load(
-        path.resolve(process.cwd(), "public", fontDescriptor.src)
-      );
+
+      const font = await OpenType.parse(fontDescriptor.src.buffer);
       fontMap.set(fontKey, font);
     }
 
