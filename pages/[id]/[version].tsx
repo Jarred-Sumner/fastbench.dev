@@ -27,7 +27,9 @@ import Head from "next/head";
 
 const scheme = process.env.NODE_ENV === "development" ? "http" : "https";
 const domain =
-  process.env.NODE_ENV === "development" ? "localhost:3001" : "fastbench.dev";
+  process.env.NODE_ENV === "development"
+    ? "localhost:3001"
+    : "fastbench.vercel.app";
 const getShareURL = ({ id, version }) =>
   `${scheme}://${domain}/${id}/${version}`;
 
