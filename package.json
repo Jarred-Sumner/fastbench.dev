@@ -7,7 +7,8 @@
     "compile-kiwi": "kiwic --schema src/lib/schema.kiwi --js src/lib/schema.js --ts src/lib/schema.d.ts --binary src/lib/schema.kiwib",
     "prebuild": "node buildIframe.js",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "vercel-build": "yum install libuuid-devel libmount-devel && cp /lib64/{libuuid,libmount,libblkid}.so.1 node_modules/canvas/build/Release/ && yarn build"
   },
   "browser": {
     "path": "path-browserify"
