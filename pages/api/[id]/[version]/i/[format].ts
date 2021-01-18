@@ -128,7 +128,6 @@ const renderShareCardSVG = async (results, baseline, fastest, title) => {
 };
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
-  console.log("RUN");
   const { id, version, format } = req.query;
 
   const { benchmark, benchmarkResults, results } = await fetchBenchmark(
@@ -152,16 +151,25 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           break;
         }
         case "png": {
-          const svg = await renderShareCardPNG(
-            results,
-            results[0],
-            results[results.length - 1],
-            benchmark.name
-          );
-          res.setHeader("Content-Type", "image/png");
-          res.setHeader("Cache-Control", "");
-          res.statusCode = 200;
-          res.write(svg);
+          try {
+            const svg = await renderShareCardPNG(
+              results,
+              results[0],
+              results[results.length - 1],
+              benchmark.name
+            );
+            res.setHeader("Content-Type", "image/png");
+            res.setHeader("Cache-Control", "");
+            res.statusCode = 200;
+            res.write(svg);
+          } catch (exception) {
+            console.error(exception);
+            res.statusCode = 500;
+            res.send("UH-OH");
+            res.setHeader("Content-Type", "text/plain");
+            res.setHeader("Cache-Control", "");
+          }
+
           break;
         }
         case "svg": {
@@ -171,7 +179,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             results[results.length - 1],
             benchmark.name
           );
-          console.log(svg);
           res.setHeader("Content-Type", "image/svg+xml");
           res.setHeader("Cache-Control", "");
           res.statusCode = 200;
