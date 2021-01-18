@@ -22,10 +22,30 @@ import {
   SHARE_CARD_HEIGHT,
   SHARE_CARD_WIDTH,
 } from "src/components/ShareCardDimensions";
+import { ImageSEOTag, TitleSEOTag, URLSEOTag } from "src/components/SEOTags";
+import Head from "next/head";
 
 const scheme = process.env.NODE_ENV === "development" ? "http" : "https";
 const domain =
   process.env.NODE_ENV === "development" ? "localhost:3001" : "fastbench.dev";
+const getShareURL = ({ id, version }) =>
+  `${scheme}://${domain}/${id}/${version}`;
+
+const ViewBenchmarkSEOTags = ({ id, version, title }) => {
+  return (
+    <>
+      <Head>
+        <ImageSEOTag
+          url={getShareURL({ id, version }) + ".png"}
+          width={SHARE_CARD_WIDTH * 2}
+          height={SHARE_CARD_HEIGHT * 2}
+        />
+        <TitleSEOTag title={title} />
+        <URLSEOTag url={getShareURL({ id, version })} />
+      </Head>
+    </>
+  );
+};
 
 export type IndexFileType = {
   timestamp: string;
@@ -103,6 +123,11 @@ export const ViewBenchmarkPage = ({
   return (
     <div className={"Page NewBenchmarkPage"}>
       <PageHeader />
+      <ViewBenchmarkSEOTags
+        id={router.query.id}
+        version={router.query.version}
+        title={benchmark.name}
+      />
 
       <div className={"NewBenchmarkPageContent"}>
         <div className={"BenchmarkHeader"}>
@@ -131,7 +156,7 @@ export const ViewBenchmarkPage = ({
             </div>
           </div>
           <img
-            src={`${scheme}://${domain}/${router.query.id}/${router.query.version}.svg`}
+            src={`${getShareURL(router.query)}.svg`}
             height={SHARE_CARD_HEIGHT}
             width={SHARE_CARD_WIDTH}
           />
