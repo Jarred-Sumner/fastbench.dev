@@ -162,6 +162,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             res.setHeader("Cache-Control", "");
             res.statusCode = 200;
             res.write(svg);
+            res.end();
           } catch (exception) {
             console.error(exception);
             res.statusCode = 500;
