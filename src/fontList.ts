@@ -10,9 +10,9 @@ export default [
     family: "Space Mono",
     style: "normal",
     weight: "normal",
-    src: fs.readFileSync(
-      path.resolve(process.cwd(), ".next/server", SpaceMonoRegular)
-      // "binary"
+    src: new Buffer(
+      SpaceMonoRegular.replace("data:font/ttf;base64,", ""),
+      "base64"
     ),
   },
 
@@ -20,9 +20,9 @@ export default [
     family: "IBM Plex Sans",
     style: "normal",
     weight: "normal",
-    src: fs.readFileSync(
-      path.resolve(process.cwd(), ".next/server", IBMPlexSansRegular)
-      // "binary"
+    src: new Buffer(
+      IBMPlexSansRegular.replace("data:font/ttf;base64,", ""),
+      "base64"
     ),
   },
 
@@ -31,17 +31,18 @@ export default [
     family: "IBM Plex Sans",
     style: "normal",
     weight: "bold",
-    src: fs.readFileSync(
-      path.resolve(process.cwd(), ".next/server", IBMPlexSansBold)
-      // "binary"
+    src: new Buffer(
+      IBMPlexSansBold.replace("data:font/ttf;base64,", ""),
+      "base64"
     ),
   },
   {
     family: "Space Mono",
     style: "normal",
     weight: "bold",
-    src: fs.readFileSync(
-      path.resolve(process.cwd(), ".next/server", SpaceMonoBold)
+    src: new Buffer(
+      SpaceMonoBold.replace("data:font/ttf;base64,", ""),
+      "base64"
     ),
   },
 ];
