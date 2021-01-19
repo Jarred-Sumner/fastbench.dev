@@ -27,9 +27,7 @@ const useConfetti = (ref: React.Ref<HTMLDivElement>) => {
 
 const scheme = process.env.NODE_ENV === "development" ? "http" : "https";
 const domain =
-  process.env.NODE_ENV === "development"
-    ? "localhost:3001"
-    : "fastbench.vercel.app";
+  process.env.NODE_ENV === "development" ? "localhost:3001" : "fastbench.dev";
 export const getShareURL = ({ id, version }) =>
   `${scheme}://${domain}/${id}/${version}`;
 
