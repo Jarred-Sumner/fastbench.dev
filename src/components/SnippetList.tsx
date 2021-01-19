@@ -29,6 +29,7 @@ export const SnippetList = ({
   sharedSnippet,
   runner,
   showShared = true,
+  setDirty,
   results = [],
 }) => {
   const onChangeSharedSnippet = React.useCallback(
@@ -52,8 +53,9 @@ export const SnippetList = ({
 
       snippet.code = code;
       setRunState(SnippetRunState.pending);
+      setDirty();
     },
-    [snippets, setRunState]
+    [snippets, setRunState, setDirty]
   );
 
   const updateTitle = React.useCallback(
@@ -85,6 +87,22 @@ export const SnippetList = ({
     setRunState(SnippetRunState.pending);
   }, [setSnippets, Snippet.create, setRunState]);
 
+  const removeSnippet = React.useCallback(
+    (snippetId) => {
+      setSnippets((snippets) => {
+        const _snippets = snippets.slice();
+
+        _snippets.splice(
+          snippets.findIndex((snippet) => snippet.id === snippetId),
+          1
+        );
+        return _snippets;
+      });
+      setRunState(SnippetRunState.pending);
+    },
+    [setSnippets, Snippet.create, setRunState]
+  );
+
   const progressUpdateRefs = React.useMemo(() => {
     return [
       snippets.map(() => React.createRef()),
@@ -112,7 +130,7 @@ export const SnippetList = ({
 
       return (
         <SnippetContainer
-          key={snippet.id + "-" + focusedId}
+          key={snippet.id + "-" + focusedId + "-" + index}
           title={snippet.name}
           placeholder={"Untitled snippet"}
           progressUpdateRef={progressUpdateRefs[0][index]}
@@ -124,6 +142,7 @@ export const SnippetList = ({
           onFocus={setFocusedID}
           onBlur={setFocusedID}
           code={snippet.code}
+          onDelete={snippets.length > 1 ? removeSnippet : null}
           runState={runState}
           codePlaceholder={"Insert JavaScript benchmark code in here."}
           onChangeCode={updateCode}
@@ -147,6 +166,7 @@ export const SnippetList = ({
       results,
 
       errors,
+      removeSnippet,
       errors.length,
       results.length,
       updateCode,

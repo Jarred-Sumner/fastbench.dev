@@ -602,6 +602,31 @@ h3 {
 
   align-items: center;
   grid-column-gap: 0;
+  position: relative;
+}
+
+.SnippetTitle-deleteButton {
+  font-weight: bold;
+  font-size: 0.8rem;
+  position: absolute;
+  right: 0;
+  color: rgb(153, 153, 153);
+  margin-right: 16px;
+  cursor: pointer;
+  pointer-events: all;
+  transition: transform 0.1s linear;
+  transition-property: transform, color;
+  z-index: 10;
+}
+
+.SnippetTitle-deleteButton:hover {
+  transform: scale(1.1, 1.1);
+  color: rgb(189, 58, 58);
+}
+
+.SnippetTitle-deleteButton:active {
+  transform: scale(1.2, 1.2);
+  color: rgb(189, 58, 58);
 }
 
 .SnippetTitleContainer {

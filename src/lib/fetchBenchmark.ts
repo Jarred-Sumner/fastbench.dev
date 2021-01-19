@@ -39,23 +39,29 @@ export async function fetchBenchmark(version, id) {
     new Uint8Array(await resultResp.arrayBuffer())
   );
 
+  let maxOps = Infinity;
   const results = benchmarkResults
     .toResults(benchmark.snippets)
-    .sort(sortResult);
+    .sort((a, b) => {
+      maxOps = Math.min(a.operationsPerSecond, b.operationsPerSecond, maxOps);
 
-  const ops = results
-    .map((r) => r.operationsPerSecond)
-    .sort()
-    .reverse();
+      if (a.operationsPerSecond < b.operationsPerSecond) {
+        return 1;
+      } else if (a.operationsPerSecond > b.operationsPerSecond) {
+        return -1;
+      } else {
+        return 0;
+      }
+    });
 
-  const maxOps = Math.min(...ops);
   const maxResult = results.find((a) => a.operationsPerSecond === maxOps);
 
   for (let i = 0; i < results.length; i++) {
     if (results[i]) {
-      results[i].rank = ops.indexOf(results[i].operationsPerSecond) + 1;
+      results[i].rank = i + 1;
       results[i].multiplier = getMultiplier(results[i], maxResult);
     }
   }
+
   return { benchmark: benchmark, results, benchmarkResults };
 }

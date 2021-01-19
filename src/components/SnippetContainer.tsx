@@ -3,10 +3,17 @@ import { CodeEditor } from "./CodeEditor";
 import * as React from "react";
 import { formatDecimal, formatLongDecimal, Result } from "./ResultCard";
 
-const SnippetTitle = ({ title, onChange, placeholder, disabled, icon }) => {
+const SnippetTitle = ({
+  title,
+  onChange,
+  placeholder,
+  disabled,
+  icon,
+  onDelete,
+}) => {
   return (
     <div className="SnippetTitleContainer">
-      {icon}
+      <div className="SnippetHeadingIcon">{icon}</div>
       <input
         type={"text"}
         name={"snippet-title"}
@@ -19,6 +26,12 @@ const SnippetTitle = ({ title, onChange, placeholder, disabled, icon }) => {
         defaultValue={title}
         onInput={onChange}
       />
+
+      {onDelete && (
+        <div onClick={onDelete} className="SnippetTitle-deleteButton">
+          DELETE
+        </div>
+      )}
     </div>
   );
 };
@@ -28,6 +41,8 @@ const SnippetHeading = ({
   title,
   result,
   baseline,
+  onChange,
+  onDelete,
 }: {
   icon: React.ReactNode;
   title: string;
@@ -43,18 +58,23 @@ const SnippetHeading = ({
         "SnippetHeading--notFirst": result?.rank !== 1,
       })}
     >
-      {icon}
+      <div className="SnippetHeadingIcon">{icon}</div>
       <input
         type={"text"}
         name={"snippet-title"}
         autoCapitalize={"off"}
         autoCorrect={"off"}
         autoFocus={false}
-        readOnly
-        disabled
         className={"SnippetTitle"}
-        value={title}
+        defaultValue={title}
+        onInput={onChange}
       />
+
+      {onDelete && (
+        <div onClick={onDelete} className="SnippetTitle-deleteButton">
+          DELETE
+        </div>
+      )}
 
       <div className="SnippetHeading-subheader">
         <div className="SnippetHeading-ops">{formatLongDecimal(ops)}</div>
@@ -105,6 +125,7 @@ export const SnippetContainer = ({
   title,
   icon,
   placeholder,
+  onDelete,
 
   runState,
   onChangeTitle: _onChangeTitle,
@@ -156,6 +177,10 @@ export const SnippetContainer = ({
     setShowError(false);
   }, [setShowError, disableError]);
 
+  const _onDelete = React.useCallback(() => {
+    onDelete && onDelete(id);
+  }, [onDelete, id]);
+
   return (
     <div
       onClick={onChangeCollapse}
@@ -177,6 +202,7 @@ export const SnippetContainer = ({
           placeholder={placeholder}
           icon={icon}
           result={result}
+          onDelete={!disableTitle && onDelete ? _onDelete : null}
         />
       ) : (
         <SnippetTitle
@@ -185,6 +211,7 @@ export const SnippetContainer = ({
           disabled={disableTitle}
           placeholder={placeholder}
           icon={icon}
+          onDelete={!disableTitle && onDelete ? _onDelete : null}
         />
       )}
 

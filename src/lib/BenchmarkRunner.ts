@@ -119,6 +119,7 @@ export class BenchmarkRunner {
         }
 
         this.finishedSnippets.set(snippetIndex, true);
+
         this.busyWorkers.set(target || srcElement, false);
         this.continueBenchmark();
         break;
@@ -231,7 +232,7 @@ export class BenchmarkRunner {
     if (error) {
       this.finishResolver = null;
       this.finishRejecter(error);
-    } else {
+    } else if (this.finishResolver) {
       this.finishResolver(this.getResults());
       this.finishRejecter = null;
     }
@@ -263,6 +264,7 @@ export class BenchmarkRunner {
       error = new Error(event);
     }
     this.errorData[this.busyWorkers.get(worker)] = error;
+    this.finishedSnippets.set(this.busyWorkers.get(worker), false);
     this.busyWorkers.delete(worker);
 
     this.finish(error);
@@ -291,6 +293,9 @@ export class BenchmarkRunner {
     }
 
     return new Promise((resolve, reject) => {
+      this.finishResolver = resolve;
+      this.finishRejecter = reject;
+
       for (let worker of this.workers) {
         let errFunc = this.onErrorEvent(worker);
         this.errorEvents.set(worker, errFunc);
@@ -298,9 +303,6 @@ export class BenchmarkRunner {
         worker.addEventListener("message", this.onMessageEvent);
         worker.addEventListener("error", errFunc);
       }
-
-      this.finishResolver = resolve;
-      this.finishRejecter = reject;
 
       for (
         let i = 0;

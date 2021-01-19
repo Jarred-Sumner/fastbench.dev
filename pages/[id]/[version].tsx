@@ -61,19 +61,36 @@ async function uploadBenchmark(benchmark: Benchmark, results) {
 }
 
 const ViewBenchmarkSEOTags = ({ id, version, title }) => {
-  return (
-    <>
-      <Head>
-        <ImageSEOTag
-          url={getShareURL({ id, version }) + ".png"}
-          width={SHARE_CARD_WIDTH * 2}
-          height={SHARE_CARD_HEIGHT * 2}
-        />
-        <TitleSEOTag title={title} />
-        <URLSEOTag url={getShareURL({ id, version })} />
-      </Head>
-    </>
-  );
+  const tags = [
+    ...ImageSEOTag({
+      url: getShareURL({ id, version }) + ".png",
+      width: SHARE_CARD_WIDTH * 2,
+      height: SHARE_CARD_HEIGHT * 2,
+    }),
+    ...TitleSEOTag({ title }),
+    ...URLSEOTag({ url: getShareURL({ id, version }) }),
+  ].flat(2);
+
+  return <Head>{tags}</Head>;
+};
+
+const NewBenchmarkSEOTags = ({ id, version, title: _title, isDirty }) => {
+  let title = _title || `New benchmark`;
+  if (isDirty) {
+    title = `* ${title}`;
+  }
+
+  const tags = [
+    ...TitleSEOTag({ title }),
+    ...URLSEOTag({
+      url:
+        id && version
+          ? getShareURL({ id, version })
+          : getShareURL({ id: "benches", version: "new" }),
+    }),
+  ].flat(2);
+
+  return <Head>{tags}</Head>;
 };
 
 export type IndexFileType = {
@@ -187,13 +204,23 @@ export const ShowBenchmarkPage = ({
   const router = useRouter();
 
   const [focusedId, setFocusedID] = React.useState();
+  const [isDirty, _setDirty] = React.useState(false);
+
+  const setDirty = React.useCallback(() => {
+    _setDirty(true);
+  }, [_setDirty]);
 
   const handleTitleChangeEvent = React.useCallback(
     (event: React.SyntheticEvent<InputEvent, HTMLInputElement>) => {
       setTitle(event.target.value);
+      _setDirty(true);
     },
-    [setTitle]
+    [setTitle, _setDirty]
   );
+
+  React.useEffect(() => {
+    _setDirty(false);
+  }, [runState, _setDirty]);
 
   React.useEffect(() => {
     setErrors(() => {
@@ -209,8 +236,10 @@ export const ShowBenchmarkPage = ({
 
   const showPreviousResults = !benchmarkResult?.results?.length;
 
-  const canShowResultList =
-    runState === SnippetRunState.ran || prevResults?.current?.length;
+  const canShowResultList = !!(
+    runState === SnippetRunState.ran || prevResults?.current?.length
+  );
+
   return (
     <div className={"Page NewBenchmarkPage"}>
       <PageHeader>
@@ -231,11 +260,18 @@ export const ShowBenchmarkPage = ({
           </div>
         </div>
       </PageHeader>
-      {runState === SnippetRunState.ran && (
+      {runState === SnippetRunState.ran ? (
         <ViewBenchmarkSEOTags
           id={router.query.id}
           version={router.query.version}
           title={benchmark.name}
+        />
+      ) : (
+        <NewBenchmarkSEOTags
+          id={router.query.id}
+          version={router.query.version}
+          title={benchmark.name}
+          isDirty={isDirty}
         />
       )}
 
@@ -251,9 +287,9 @@ export const ShowBenchmarkPage = ({
           />
         )}
 
-        {runState === SnippetRunState.ran && (
-          <ShareSheet benchmark={benchmark} />
-        )}
+        {runState === SnippetRunState.ran ? (
+          <ShareSheet key={benchmark.githubURL} benchmark={benchmark} />
+        ) : undefined}
 
         <SnippetList
           runState={runState}
@@ -261,6 +297,7 @@ export const ShowBenchmarkPage = ({
           sharedSnippet={benchmark.shared}
           snippets={benchmark.snippets}
           results={results}
+          setDirty={setDirty}
           setSnippets={setSnippets}
           errors={errors}
           runner={runner}
@@ -312,7 +349,6 @@ const BenchmarkPage = ({
         )
   );
 
-  debugger;
   const workerType = benchmark.workerType;
   const onCancelTest = React.useCallback(() => {
     runner.cancel();
@@ -337,7 +373,12 @@ const BenchmarkPage = ({
   );
   const setSnippets = React.useCallback(
     (snippets) => {
-      benchmark.snippets = snippets;
+      if (typeof snippets === "function") {
+        benchmark.snippets = snippets(benchmark.snippets);
+      } else {
+        benchmark.snippets = snippets;
+      }
+
       setBenchmark(benchmark.clone());
     },
     [benchmark, setBenchmark]
@@ -366,9 +407,26 @@ const BenchmarkPage = ({
 
   const onRunTest = React.useCallback(() => {
     setRunState(SnippetRunState.running);
-    const _benchmark = new Benchmark(snippets, sharedSnippet, title, null);
+    const filteredSnippets = snippets.slice();
+    for (let i = 0; i < filteredSnippets.length; i++) {
+      const snippet = filteredSnippets[i];
 
-    if (!_benchmark.name.length) {
+      if (!snippet.hasCode()) {
+        filteredSnippets.splice(i, 1);
+      } else if (!snippet.name.trim().length) {
+        snippet.name = snippet.code.substring(0, 12);
+      }
+    }
+
+    const _benchmark = new Benchmark(
+      filteredSnippets,
+      sharedSnippet,
+      title,
+      benchmark.id,
+      benchmark.version
+    );
+
+    if (!_benchmark.name.trim().length) {
       _benchmark.name = _benchmark.snippets.map((s) => s.name).join(" vs ");
     }
     console.time("Completed test run");
@@ -380,7 +438,7 @@ const BenchmarkPage = ({
         console.timeEnd("Completed test run");
         if (runner.canSave) {
           const benchmarkResults = BenchmarkResult.createFromJSON(
-            _benchmark.id || Math.random().toString(10),
+            _benchmark.id,
             navigator.userAgent,
             results
           );
@@ -409,12 +467,21 @@ const BenchmarkPage = ({
       },
       (err) => {
         console.timeEnd("Completed test run");
+        let lastId;
+        let found = false;
         for (let [id, isFinished] of runner.finishedSnippets.entries()) {
           if (!isFinished) {
-            runner.errorData[id] = err;
+            runner.errorData[Number.isFinite(lastId) ? lastId : id] = err;
+            found = true;
             break;
           }
+          lastId = id;
         }
+
+        if (!found) {
+          runner.errorData[runner.errorData.length - 1] = err;
+        }
+
         console.error(err);
         globalThis.onerror = null;
         setErrors(runner.errorData);
