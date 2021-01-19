@@ -1,13 +1,12 @@
-import Head from "next/head";
-import { Logo } from "src/components/Logo";
-import { Navigation } from "../src/components/Navigation";
+import { AsyncShareCard } from "src/components/AsyncShareCard";
+import fixture from "src/components/fixture";
 import { LinkButton } from "../src/components/LinkButton";
+import { PageHeader } from "../src/components/PageHeader";
 import {
   CardColorScheme,
   Result,
   ResultCard,
 } from "../src/components/ResultCard";
-import { PageHeader } from "../src/components/PageHeader";
 
 const SAMPLE_DATA: Result[][] = [
   [
@@ -48,11 +47,13 @@ export default function Home() {
 
       <div className={"Gallery"}>
         <div className={"GalleryList"}>
-          <ResultCard
-            results={SAMPLE_DATA[0]}
+          <AsyncShareCard
+            results={[...fixture.result.toResults(fixture.snippets)]}
+            baseline={fixture.result.toResults(fixture.snippets)[0]}
+            fastest={fixture.result.toResults(fixture.snippets)[1]}
             title={"Array loops"}
             href={"/r/123"}
-            colorScheme={CardColorScheme.blue}
+            colorScheme={"default"}
           />
           <ResultCard
             results={SAMPLE_DATA[0]}

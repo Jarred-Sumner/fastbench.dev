@@ -107,16 +107,20 @@ h3 {
   color: var(--color-brand);
 }
 
+.LandingHeader-Container {
+  padding: 0 var(--padding-horizontal);
+  backdrop-filter: blur(2px);
+  background-color: var(--page-background-alpha);
+  position: sticky;
+  top: 0;
+  z-index: 999;
+}
+
 .LandingHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 34px var(--padding-horizontal);
-  background-color: var(--page-background-alpha);
-  backdrop-filter: blur(2px);
-  position: sticky;
-  top: 0;
-  z-index: 999;
 }
 
 .HeroContainer {
@@ -166,6 +170,10 @@ h3 {
 
 .Tagline {
   font-size: 2.2rem;
+}
+
+.RunTestButtonContainer {
+  position: sticky;
 }
 
 .LinkButton {
@@ -329,6 +337,20 @@ h3 {
   margin-left: 6px;
 }
 
+.Confetti {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: translate(25vh, 10vw);
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  webkit-user-select: none;
+}
+
+.ShareSheet,
 .ResultListSection,
 .BenchmarkHeader,
 .SnippetList,
@@ -591,18 +613,87 @@ h3 {
   font-family: var(--heading-font);
   font-size: 1.5rem;
   color: white;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}
+
+.ShareSheet {
+  display: grid;
+
+  grid-template-columns: max-content;
+  margin-bottom: 24px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+}
+
+.ShareHeader-copyButton {
+  margin-top: auto;
+  margin-bottom: auto;
+
+  font-family: var(--heading-font);
+  color: white;
+  transform: scale(1, 1);
+  transition: transform 0.1s linear;
+  transition-property: color, transform;
+
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  padding: 0 16px;
+  display: block;
+}
+
+.ShareHeader-copyButton:hover {
+  transform: scale(1.2, 1.2);
+  color: var(--color-brand);
+}
+
+.ShareHeader-copyButton:active {
+  transform: scale(1.5, 1.5);
+  color: var(--color-brand);
 }
 
 .ShareHeader-urlBox {
-  display: flex;
-  padding: 8px 12px;
-  max-width: 300px;
+  padding: 16px 0;
+  margin: 0;
+  width: 100%;
   overflow-x: hidden;
   white-space: nowrap;
 }
 .ShareHeader-url {
   font-size: 1rem;
-  color: rgb(153, 153, 153);
+  user-select: auto;
+  --webkit-user-select: auto;
+  margin: 0;
+  min-width: 480px;
+  max-width: var(--page-width);
+  border-radius: 48px;
+  border: 1px solid rgb(32, 32, 32);
+  flex: 1;
+  color: rgb(220, 220, 220);
+  appearance: none;
+  background-color: rgb(20, 20, 20);
+  box-shadow: none;
+  font-family: var(--heading-font);
+  font-variant-ligatures: none;
+  padding: 8px 16px;
+  width: 100%;
+  outline: 0;
+}
+
+.ShareHeader-url:hover {
+  border-color: var(--color-brand-muted);
+}
+
+.ShareHeader-url:focus {
+  border-color: var(--color-brand);
+}
+
+.ShareHeader-urlBox {
+  display: flex;
 }
 
 @media (max-width: 1152px) {
@@ -680,14 +771,32 @@ h3 {
   color: white;
   font-family: var(--heading-font);
 }
+
+a.ResultListSection--subHeading-section {
+  cursor: pointer;
+}
+
+a.ResultListSection--subHeading-section:hover {
+  text-decoration: underline;
+}
+
+.ResultListSection--disabled {
+  opacity: 0.5;
+}
 .ResultListSection--subHeading {
   color: rgb(153, 153, 153);
   display: grid;
-  grid-template-columns: min-content min-content auto;
+  width: 100%;
+  grid-auto-flow: column;
+  grid-auto-columns: min-content;
+  white-space: nowrap;
+
   grid-column-gap: 8px;
   margin-bottom: 16px;
 }
 .ResultListSection--subHeading--section {
+  white-space: nowrap;
+  display: block;
 }
 .ResultListSection--subHeading--separator {
 }
@@ -775,4 +884,15 @@ h3 {
   .ResultLongListItem-statGroup {
     margin-bottom: 12px;
   }
+
+  .ShareSheet {
+    display: none;
+  }
+}
+
+.GithubLink {
+  font-size: 0.8rem;
+  padding: 4px;
+  display: block;
+  color: rgb(153, 153, 153);
 }

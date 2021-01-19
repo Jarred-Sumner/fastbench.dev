@@ -41,7 +41,7 @@ export class BenchmarkResult implements SchemaBenchmarkResults {
       let snippetResultI = 0;
       for (; snippetResultI < this.results.length; snippetResultI++) {
         const result = this.results[snippetResultI];
-        if (result.id === snippet.id) {
+        if (result && result.id === snippet?.id) {
           snippetResult = result.results[result.results.length - 1];
           break;
         }

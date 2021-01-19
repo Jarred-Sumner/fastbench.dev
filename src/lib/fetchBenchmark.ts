@@ -14,14 +14,16 @@ if (typeof window === "undefined") {
 }
 
 function sortResult(a: Result, b: Result) {
-  if (a && b) {
-    return a.operationsPerSecond - b.operationsPerSecond;
+  if (a && b && a.operationsPerSecond !== b.operationsPerSecond) {
+    return a.operationsPerSecond > b.operationsPerSecond ? 1 : -1;
+  } else if (a && b && a.operationsPerSecond === b.operationsPerSecond) {
+    return 0;
   } else if (a) {
     return 1;
   } else if (b) {
     return -1;
   } else {
-    return -1;
+    return 0;
   }
 }
 
@@ -39,16 +41,20 @@ export async function fetchBenchmark(version, id) {
 
   const results = benchmarkResults
     .toResults(benchmark.snippets)
-    .filter(Boolean)
     .sort(sortResult);
+
+  const ops = results
+    .map((r) => r.operationsPerSecond)
+    .sort()
+    .reverse();
+
+  const maxOps = Math.min(...ops);
+  const maxResult = results.find((a) => a.operationsPerSecond === maxOps);
 
   for (let i = 0; i < results.length; i++) {
     if (results[i]) {
-      results[i].rank = i + 1;
-      results[i].multiplier = getMultiplier(
-        results[i],
-        results[results.length - 1]
-      );
+      results[i].rank = ops.indexOf(results[i].operationsPerSecond) + 1;
+      results[i].multiplier = getMultiplier(results[i], maxResult);
     }
   }
   return { benchmark: benchmark, results, benchmarkResults };

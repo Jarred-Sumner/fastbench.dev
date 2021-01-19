@@ -3,6 +3,10 @@ const path = require("path");
 module.exports = {
   typescript: { ignoreBuildErrors: true },
   experimental: { modern: true },
+  env: {
+    GITHUB_REPO_OWNER: process.env.GITHUB_REPO_OWNER,
+    GITHUB_REPO: process.env.GITHUB_REPO,
+  },
   async rewrites() {
     return [
       {

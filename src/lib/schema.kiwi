@@ -11,7 +11,7 @@ struct Times {
   float cycle;
   float elapsed;
   float period;
-  uint timeStamp;
+  float timeStamp;
 }
 
 message SnippetResult {

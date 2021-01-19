@@ -57,7 +57,17 @@ const FlexChild = ({
     </ElementType>
   );
 };
-export const Flexbox = ({ children: _children, style, width, height }) => {
+
+// I am embarrassed at the performance of this.
+// Maybe someday I'll move it to a library.
+export const Flexbox = ({
+  children: _children,
+  style,
+  width,
+  height,
+  onMeasure,
+  measureType,
+}) => {
   let children = _children;
   const allocator = React.useRef<Allocator>();
   const nodeMap = React.useRef<Map<Symbol, Node>>();
@@ -106,6 +116,16 @@ export const Flexbox = ({ children: _children, style, width, height }) => {
 
         node = new Node(allocator.current, styleProp);
 
+        if (child?.type === measureType && onMeasure) {
+          let _props = { ...child.props };
+          node.setMeasure((width, height) => {
+            const result = onMeasure(_props, width, height);
+            _props = null;
+
+            return result;
+          });
+        }
+
         if (isRoot) {
           if (!nodeChildren.current.get(rootNode.current)) {
             nodeChildren.current.set(rootNode.current, []);
@@ -153,7 +173,16 @@ export const Flexbox = ({ children: _children, style, width, height }) => {
 
       return child;
     },
-    [allocator, nodeMap, rootNodes, nodeChildren, style, rootNode]
+    [
+      allocator,
+      nodeMap,
+      rootNodes,
+      nodeChildren,
+      style,
+      rootNode,
+      onMeasure,
+      measureType,
+    ]
   );
 
   const applyStyles = React.useCallback(

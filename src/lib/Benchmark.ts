@@ -65,7 +65,7 @@ export class Benchmark {
   }
 
   get githubURL() {
-    return `https://github.com/${process.env.GITHUB_REPO_OWNER}/${process.env.GITHUB_REPO}/${this.basepath}`;
+    return `https://github.com/${process.env.GITHUB_REPO_OWNER}/${process.env.GITHUB_REPO}/tree/main/${this.basepath}`;
   }
 
   get githubResultsURL() {
@@ -140,6 +140,17 @@ export class Benchmark {
       version: this.version,
       workerType: this.workerType,
     };
+  }
+
+  clone() {
+    return new Benchmark(
+      this.snippets,
+      this.shared,
+      this.name,
+      this.id,
+      this.version,
+      this.workerType
+    );
   }
 
   static fromJSON({ snippets, shared, name, id, version, workerType }) {

@@ -59,13 +59,7 @@ function getResultYOffset(index: number) {
 const ResultLabel = ({ rank, title, index, theme, ...props }) => {
   let fontSize = 14;
 
-  if (title.length > 10) {
-    fontSize = 12;
-  }
-
-  if (title.length > 14) {
-    title = title.substring(0, 18);
-  }
+  title = title.substring(0, 16);
 
   return (
     <text
@@ -75,9 +69,9 @@ const ResultLabel = ({ rank, title, index, theme, ...props }) => {
       fontSize={fontSize}
       fill={rank === 1 ? theme.highlight : theme.primary}
       yoga={{
-        marginStart: 0,
         flexShrink: 0,
         flexGrow: 1,
+        flexBasis: 1,
         height: RESULT_LABEL_HEIGHT,
         paddingTop: RESULT_LABEL_Y_OFFSET / 2,
         paddingBottom: RESULT_LABEL_Y_OFFSET / 2,
@@ -97,6 +91,7 @@ const ResultProgressBar = ({ rank, theme, value, index, ...props }) => (
       top: -RESULT_LABEL_Y_OFFSET - 2,
       flexShrink: 0,
       flexGrow: 1,
+      justifyContent: JustifyContent.FlexStart,
     }}
   >
     <rect
@@ -119,6 +114,7 @@ export function ShareCard({
   title,
   results,
   baseline,
+  onMeasure,
   fastest,
 }: {
   colorScheme: ColorSchemeID;
@@ -186,6 +182,8 @@ export function ShareCard({
       <Flexbox
         height={SHARE_CARD_HEIGHT}
         width={SHARE_CARD_WIDTH}
+        onMeasure={onMeasure}
+        measureType="text"
         style={{
           flexDirection: FlexDirection.Column,
           height: SHARE_CARD_HEIGHT,
@@ -218,11 +216,15 @@ export function ShareCard({
         <g
           yoga={{
             flexDirection: FlexDirection.Row,
+            justifyContent: JustifyContent.SpaceAround,
             alignItems: AlignItems.Center,
+            marginBottom: 16,
+
             flexGrow: 1,
             flexShrink: 1,
             height: "100%",
             minHeight: 40,
+            width: SHARE_CARD_WIDTH,
           }}
         >
           <g
@@ -230,17 +232,19 @@ export function ShareCard({
               flexDirection: FlexDirection.Column,
               alignItems: AlignItems.FlexStart,
               flexWrap: FlexWrap.NoWrap,
+              flexGrow: 1,
+              flexShrink: 1,
+              marginEnd: 24,
             }}
           >
             <text
               fontFamily={titleFontFamily}
               fontSize={32 + "px"}
               letterSpacing={-3}
+              height={24}
+              width={50}
               yoga={{
-                width: 100,
-                height: typeof window === "undefined" ? 24 : 6,
-                flexGrow: 0,
-                // flexBasis: 1,
+                flexGrow: 1,
                 flexShrink: 1,
               }}
               fontWeight={titleFontWeight}
@@ -257,8 +261,12 @@ export function ShareCard({
               alignmentBaseline="before-edge"
               fontWeight={opsFontWeight}
               fill={muted}
-              width={100}
               height={14}
+              width={50}
+              yoga={{
+                flexGrow: 1,
+                flexShrink: 1,
+              }}
             >
               {formatDecimal(fastest.operationsPerSecond, 1)} ops/s
             </text>
@@ -270,7 +278,9 @@ export function ShareCard({
               flexWrap: FlexWrap.NoWrap,
               flexGrow: 1,
               flexShrink: 1,
-              justifyContent: JustifyContent.Center,
+              marginStart: 16,
+              marginEnd: 16,
+              justifyContent: JustifyContent.FlexEnd,
               minHeight: 50,
             }}
           >
@@ -282,8 +292,10 @@ export function ShareCard({
               flexDirection: FlexDirection.Column,
               justifyContent: JustifyContent.Center,
               flexWrap: FlexWrap.NoWrap,
-              flexGrow: 0,
-              flexShrink: 1,
+              flexGrow: 1,
+              flexShrink: 0,
+              paddingEnd: 16,
+
               minHeight: 50,
             }}
           >

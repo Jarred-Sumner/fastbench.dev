@@ -67,38 +67,36 @@ const ResultLongListItem = ({
 export const ResultList = ({
   snippets,
   result,
+  results,
   resultIndex = 0,
+  githubURL,
+  disabled,
 }: {
   snippets: Snippet[];
   result: BenchmarkResult;
+  results: Result[];
   resultIndex: number;
+  disabled: boolean;
 }) => {
   const formatter = React.useMemo(() => {
     return new Intl.DateTimeFormat(undefined, {});
   }, [Intl.DateTimeFormat]);
 
-  const snippetResults = React.useMemo(() => result.toResults(snippets), [
-    result,
-    snippets,
-  ]);
-
   const baseline = React.useMemo(() => {
-    const minOps = Math.max(
-      ...result.results[resultIndex].results.map((a) => a.hz)
-    );
+    const minOps = Math.max(...results.map((a) => a.operationsPerSecond));
 
-    for (let i = 0; i < snippetResults.length; i++) {
-      if (snippetResults[i].operationsPerSecond === minOps) {
-        return snippetResults[i];
+    for (let i = 0; i < results.length; i++) {
+      if (results[i].operationsPerSecond === minOps) {
+        return results[i];
       }
     }
     return null;
-  }, [result.results, resultIndex, snippetResults]);
+  }, [result?.results, resultIndex, results]);
 
-  const group = result.results[resultIndex];
+  const group = result?.results[resultIndex];
 
-  const timeStamp = group.results[0].times.timeStamp;
-  const userAgent = group.userAgents[0];
+  const timeStamp = group?.results[0]?.times?.timeStamp;
+  const userAgent = group?.userAgents[0];
   const platform = Platform.parse(userAgent);
 
   const renderResultListItem = React.useCallback(
@@ -111,25 +109,53 @@ export const ResultList = ({
         />
       );
     },
-    [snippetResults, baseline]
+    [results, baseline]
   );
 
   return (
-    <div className="ResultListSection">
+    <div
+      className={`ResultListSection ${
+        disabled ? "ResultListSection--disabled" : ""
+      }`}
+    >
       <div className="ResultListSection--subHeading">
-        <div className="ResultListSection--subHeading-section">
-          {formatter.format(new Date(timeStamp))}
-        </div>
+        {timeStamp && (
+          <>
+            <div className="ResultListSection--subHeading-section">
+              {formatter.format(new Date(timeStamp))}
+            </div>
 
-        <div className="ResultListSection--subHeading-separator">&middot;</div>
+            <div className="ResultListSection--subHeading-separator">
+              &middot;
+            </div>
+          </>
+        )}
 
-        <div className="ResultListSection--subHeading-section">
-          {platform.description}
-        </div>
+        {platform?.description && (
+          <div className="ResultListSection--subHeading-section">
+            {platform.description}
+          </div>
+        )}
+
+        {!githubURL.includes("undefined") && (
+          <>
+            <div className="ResultListSection--subHeading-separator">
+              &middot;
+            </div>
+
+            <a
+              href={githubURL}
+              target="_blank"
+              className="ResultListSection--subHeading-section ResultListSection--subHeading-section--github"
+            >
+              GitHub
+            </a>
+          </>
+        )}
       </div>
 
       <div className="ResultListSection-results">
-        {snippetResults.map(renderResultListItem)}
+        {results.map(renderResultListItem)}
       </div>
     </div>
   );

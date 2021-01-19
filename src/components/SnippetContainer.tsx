@@ -27,6 +27,7 @@ const SnippetHeading = ({
   icon,
   title,
   result,
+  baseline,
 }: {
   icon: React.ReactNode;
   title: string;
@@ -60,7 +61,7 @@ const SnippetHeading = ({
         <div className="SnippetHeading-opsLabel">OPS/S</div>
         <span className="SnipptHeading-Dot">&middot;</span>
         <div className="SnippetHeading-multiplier">
-          {formatDecimal(result?.multiplier ?? 0, 2)}
+          {formatDecimal(result?.multiplier ?? 0, 1)}
           <span className="xIcon">x</span>
         </div>
       </div>
@@ -104,6 +105,7 @@ export const SnippetContainer = ({
   title,
   icon,
   placeholder,
+
   runState,
   onChangeTitle: _onChangeTitle,
   disableTitle,

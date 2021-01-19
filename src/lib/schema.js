@@ -74,7 +74,7 @@ exports["decodeTimes"] = function(bb) {
   result["cycle"] = bb.readVarFloat();
   result["elapsed"] = bb.readVarFloat();
   result["period"] = bb.readVarFloat();
-  result["timeStamp"] = bb.readVarUint();
+  result["timeStamp"] = bb.readVarFloat();
   return result;
 };
 
@@ -105,7 +105,7 @@ exports["encodeTimes"] = function(message, bb) {
 
   var value = message["timeStamp"];
   if (value != null) {
-    bb.writeVarUint(value);
+    bb.writeVarFloat(value);
   } else {
     throw new Error("Missing required field \"timeStamp\"");
   }

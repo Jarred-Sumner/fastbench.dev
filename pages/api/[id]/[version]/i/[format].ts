@@ -55,6 +55,150 @@ const renderShareCardPNG = async (results, baseline, fastest, title) => {
   });
 };
 
+function fetchFont(family, weight) {
+  const fontKey = `${family}-${weight}`;
+  if (!fontMap.has(fontKey)) {
+    const fontDescriptor = fontList.find((font) => {
+      return font.weight === weight && font.family === family;
+    });
+
+    const font = OpenType.parse(fontDescriptor.src.buffer);
+    fontMap.set(fontKey, font);
+  }
+
+  return fontMap.get(fontKey);
+}
+
+const MAX_SIZE_THAT_FITS_COUNT = 10;
+
+enum SizeThatFitsType {
+  width,
+  height,
+  widthAndHeight,
+}
+
+function sizeThatFits(
+  font: OpenType.Font,
+  text: string,
+  size: number,
+  desiredWidth: number,
+  desiredHeight: number
+) {
+  let width = Infinity,
+    height = Infinity,
+    path: OpenType.Path = null,
+    roundedHeight = Infinity,
+    roundedWidth = Infinity;
+  let fontSize = size,
+    i = 0;
+  let sizeCheckType: SizeThatFitsType;
+
+  if (
+    Number.isFinite(desiredWidth) &&
+    Number.isFinite(desiredHeight) &&
+    desiredWidth > 0 &&
+    desiredHeight > 0
+  ) {
+    sizeCheckType = SizeThatFitsType.widthAndHeight;
+  } else if (Number.isFinite(desiredHeight) && desiredHeight > 0) {
+    sizeCheckType = SizeThatFitsType.height;
+  } else if (Number.isFinite(desiredWidth) && desiredWidth > 0) {
+    sizeCheckType = SizeThatFitsType.width;
+  } else {
+    return size;
+  }
+
+  do {
+    path = font.getPath(text, fontSize, fontSize, fontSize);
+    const { x1, x2, y1, y2 } = path.getBoundingBox();
+    width = Math.abs(x2 - x1);
+    height = Math.abs(y2 - y1);
+
+    i++;
+
+    switch (sizeCheckType) {
+      case SizeThatFitsType.height: {
+        roundedHeight = Math.fround(height);
+        if (roundedHeight === desiredHeight) {
+          return fontSize;
+        } else if (roundedHeight > height) {
+          fontSize -= 0.2;
+        } else if (roundedHeight < height) {
+          fontSize += 0.2;
+        }
+
+        break;
+      }
+
+      case SizeThatFitsType.width: {
+        roundedWidth = Math.fround(width);
+        if (roundedWidth === desiredWidth) {
+          return fontSize;
+        } else if (roundedWidth > width) {
+          fontSize -= 0.2;
+        } else if (roundedWidth < width) {
+          fontSize += 0.2;
+        }
+
+        break;
+      }
+
+      case SizeThatFitsType.widthAndHeight: {
+        roundedHeight = Math.fround(height);
+        roundedWidth = Math.fround(width);
+
+        if (roundedHeight === desiredHeight && roundedWidth === desiredWidth) {
+          return fontSize;
+        }
+
+        if (roundedHeight > height) {
+          fontSize -= 0.2;
+          continue;
+        } else if (roundedHeight < height) {
+          fontSize += 0.2;
+          continue;
+        }
+
+        if (roundedWidth > width) {
+          fontSize -= 0.2;
+          continue;
+        } else if (roundedWidth < width) {
+          fontSize += 0.2;
+          continue;
+        }
+
+        break;
+      }
+    }
+  } while (i < MAX_SIZE_THAT_FITS_COUNT);
+
+  return fontSize;
+}
+
+function onMeasureText(
+  { fontFamily, fontSize, children, fontWeight, sizeToFit = true },
+  desiredWidth: number,
+  desiredHeight: number
+) {
+  const font = fetchFont(fontFamily, fontWeight);
+  let size = parseInt(fontSize, 10);
+  const text = String(children);
+
+  if (sizeToFit) {
+    size = sizeThatFits(font, text, size, desiredWidth, desiredHeight);
+  }
+
+  const path = font.getPath(text, size, size, size);
+  const { x1, x2, y1, y2 } = path.getBoundingBox();
+
+  const res = {
+    width: Math.abs(x2 - x1),
+    height: Math.abs(y2 - y1),
+  };
+
+  return res;
+}
+
 const renderShareCardSVG = async (results, baseline, fastest, title) => {
   if (!ShareCard) {
     ShareCard = await import("src/components/ShareCard");
@@ -66,6 +210,7 @@ const renderShareCardSVG = async (results, baseline, fastest, title) => {
       baseline,
       fastest,
       title,
+      onMeasure: onMeasureText,
     })
   );
 
@@ -104,18 +249,10 @@ const renderShareCardSVG = async (results, baseline, fastest, title) => {
     text,
     element,
   } of strings) {
-    const fontKey = `${family}-${weight}`;
-    if (!fontMap.has(fontKey)) {
-      const fontDescriptor = fontList.find((font) => {
-        return font.weight === weight && font.family === family;
-      });
+    const font = await fetchFont(family, weight);
+    let _size = sizeThatFits(font, text, size, width, height);
 
-      const font = await OpenType.parse(fontDescriptor.src.buffer);
-      fontMap.set(fontKey, font);
-    }
-
-    const font = fontMap.get(fontKey);
-    const svg = $(font.getPath(text, x, y, size).toSVG(8));
+    const svg = $(font.getPath(text, x, y, _size).toSVG(8));
     for (let { name, value } of getAllAttributes(element.get(0))) {
       svg.attr(name, value);
     }

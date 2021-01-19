@@ -99,14 +99,13 @@ export const SnippetList = ({
 
   const renderSnippetContainer = React.useCallback(
     (snippet: Snippet, index: number) => {
-      let result: Result;
+      let result: Result, baseline;
       if (results?.length) {
-        for (let i = 0; i < results.length; i++) {
+        for (let i = 0; i < results.length && (!baseline || !result); i++) {
           const _result = results[i];
 
           if (_result.id === snippet.id) {
             result = _result;
-            break;
           }
         }
       }
@@ -146,6 +145,7 @@ export const SnippetList = ({
       snippets,
       focusedId,
       results,
+
       errors,
       errors.length,
       results.length,

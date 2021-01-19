@@ -18,7 +18,7 @@ export const TitleInput = ({
       autoCorrect={"on"}
       className={"TitleInput"}
       placeholder={placeholder}
-      autoFocus
+      autoFocus={false}
       type={"text"}
       defaultValue={defaultValue}
       value={readOnly ? defaultValue : undefined}
