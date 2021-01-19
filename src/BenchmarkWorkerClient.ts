@@ -1,8 +1,17 @@
 import { MessageType, StatusMessageType } from "src/WorkerMessage";
-import { transformSync } from "esbuild";
-import { Benchmark } from "./lib/Benchmark";
+import { Benchmark, TransformType } from "./lib/Benchmark";
 import type { default as BenchmarkType } from "benchmark";
 import type { LexerType } from "src/parseImports";
+import type { Service, TransformOptions } from "esbuild-wasm/esm/browser";
+
+const ESBUILD_WASM = "/esbuild.wasm";
+
+const ESBUILD_OPTS: TransformOptions = {
+  loader: "jsx",
+  minify: false,
+  avoidTDZ: false,
+};
+let esbuild: Service;
 
 let parseImports;
 
@@ -178,8 +187,41 @@ async function start(
     postMessage({ type: MessageType.error, value: error, id });
     stopProgressUpdates();
   }
-  let snippetCode = snippet.code;
+
+  if (!snippet?.code?.trim().length) {
+    errorHandler(new Error("Empty snippet"));
+    return;
+  }
+
+  let snippetCode = snippet?.code;
   let sharedCode = benchmark?.shared?.code ?? null;
+
+  if (benchmark.transform === TransformType.jsx) {
+    try {
+      if (!esbuild) {
+        const _esbuild = await import("esbuild-wasm/esm/browser");
+
+        esbuild = await _esbuild.startService({
+          wasmURL: ESBUILD_WASM,
+        });
+
+        console.log("Loaded ESBuild.");
+      }
+
+      const [_snippetCode, _sharedCode] = await Promise.all([
+        esbuild.transform(snippetCode, ESBUILD_OPTS),
+        esbuild.transform(sharedCode, ESBUILD_OPTS),
+      ]);
+
+      snippetCode = _snippetCode.code;
+      sharedCode = _sharedCode.code;
+    } catch (exception) {
+      errorHandler(exception);
+      return;
+    }
+
+    console.log(snippetCode);
+  }
 
   try {
     if (snippetCode.includes("import")) {
@@ -192,6 +234,7 @@ async function start(
     errorHandler(exception);
     return;
   }
+  console.log(benchmark.transform);
 
   let _suite: BenchmarkType.Suite = new Suite(snippet.name, {
     maxTime: 30,

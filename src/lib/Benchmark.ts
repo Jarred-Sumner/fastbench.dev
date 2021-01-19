@@ -35,6 +35,11 @@ export enum BenchmarkUpdateType {
   results = 2,
 }
 
+export enum TransformType {
+  none = 0,
+  jsx = 1,
+}
+
 export class Benchmark {
   snippets: Snippet[];
   shared: Snippet;
@@ -42,13 +47,16 @@ export class Benchmark {
   id?: string;
   version: number;
   workerType: WorkerType;
+  transform = TransformType.none;
+
   constructor(
     snippets: Snippet[],
     shared: Snippet,
     name: string,
     id?: string,
     version: number = 0,
-    workerType: WorkerType = WorkerType.inline
+    workerType: WorkerType = WorkerType.inline,
+    transform: TransformType = TransformType.none
   ) {
     this.snippets = snippets;
     this.shared = shared;
@@ -56,6 +64,7 @@ export class Benchmark {
     this.id = id;
     this.version = parseInt(version, 10) || 0;
     this.workerType = workerType;
+    this.transform = transform;
   }
 
   get parentDirectory() {
@@ -145,6 +154,7 @@ export class Benchmark {
       id: this.id,
       version: this.version,
       workerType: this.workerType,
+      transform: this.transform,
     };
   }
 
@@ -155,18 +165,28 @@ export class Benchmark {
       this.name,
       this.id,
       this.version,
-      this.workerType
+      this.workerType,
+      this.transform
     );
   }
 
-  static fromJSON({ snippets, shared, name, id, version, workerType }) {
+  static fromJSON({
+    snippets,
+    shared,
+    name,
+    id,
+    version,
+    workerType,
+    transform,
+  }) {
     return new Benchmark(
       snippets.map(Snippet.fromJSON),
       Snippet.fromJSON(shared),
       name,
       id,
       version,
-      workerType
+      workerType,
+      transform
     );
   }
 }

@@ -617,7 +617,53 @@ h3 {
 .SnippetTitle-importButtonContainer {
   position: absolute;
   right: 0;
+  display: grid;
+  grid-auto-flow: column;
+  grid-column-gap: 16px;
+  align-items: center;
   z-index: 10;
+}
+
+.SnippetTitle-transformField {
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  transition: transform 0.1s linear;
+}
+
+.SnippetTitle-transformField:hover {
+  transform: scale(1.05, 1.05);
+}
+
+.SnippetTitle-transformField:active {
+  transform: scale(1.2, 1.2);
+}
+
+.Toggler {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgb(153, 153, 153);
+  background-color: rgb(25, 25, 25);
+  margin-right: 6px;
+}
+
+.SnippetTitle-transformField--checked .Toggler {
+  background-color: var(--color-brand);
+  border-color: rgb(50, 50, 50);
+}
+.SnippetTitle-transformField-label {
+  text-transform: uppercase;
+  margin-left: 4px;
+  user-select: none;
+  -webkit-user-select: none;
+  font-weight: bold;
+  color: white;
+  font-family: var(--heading-font);
+}
+
+.SnippetTitle-transformField--checked .SnippetTitle-transformField-label {
+  color: var(--color-brand);
 }
 
 .SnippetTitle-deleteButton,

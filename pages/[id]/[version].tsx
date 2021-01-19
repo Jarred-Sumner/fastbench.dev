@@ -7,6 +7,7 @@ import {
   BenchmarkUpdateType,
   joinBenchmarkURL,
   RESULTS_FILENAME,
+  TransformType,
 } from "src/lib/Benchmark";
 import { BenchmarkResult } from "src/lib/SnippetResult";
 import { getMultiplier, Result } from "src/components/ResultCard";
@@ -244,6 +245,7 @@ export const ShowBenchmarkPage = ({
   errors,
   setErrors,
   snippets,
+  setTransform,
   sharedSnippet,
   setSnippets,
   onCancelTest,
@@ -355,6 +357,8 @@ export const ShowBenchmarkPage = ({
           runner={runner}
           focusedId={focusedId}
           setFocusedID={setFocusedID}
+          transform={benchmark.transform}
+          setTransform={setTransform}
         />
       </div>
     </div>
@@ -433,7 +437,7 @@ const BenchmarkPage = ({
       }
 
       setBenchmark(benchmark.clone());
-      setDirty();
+      setDirty(true);
     },
     [benchmark, setBenchmark, setDirty]
   );
@@ -442,7 +446,24 @@ const BenchmarkPage = ({
     (title) => {
       benchmark.name = title;
       setBenchmark(benchmark.clone());
-      setDirty();
+      setDirty(true);
+    },
+    [benchmark, setBenchmark, setDirty]
+  );
+
+  const setTransform = React.useCallback(
+    (transform) => {
+      benchmark.transform = transform;
+      if (
+        transform === TransformType.jsx &&
+        !benchmark.shared.code.includes("React")
+      ) {
+        benchmark.shared.code =
+          `import React from "https://cdn.skypack.dev/react@17.0.1";\n` +
+          benchmark.shared.code;
+      }
+      setBenchmark(benchmark.clone());
+      setDirty(true);
     },
     [benchmark, setBenchmark, setDirty]
   );
@@ -489,15 +510,7 @@ const BenchmarkPage = ({
       }
 
       if (updateType === BenchmarkUpdateType.fork) {
-        _benchmark = new Benchmark(
-          filteredSnippets,
-          sharedSnippet,
-          title,
-          benchmark.id,
-          benchmark.version
-        );
-      } else {
-        _benchmark = new Benchmark(filteredSnippets, sharedSnippet, title);
+        _benchmark = _benchmark.clone();
       }
 
       if (!_benchmark.name.trim().length) {
@@ -506,6 +519,8 @@ const BenchmarkPage = ({
 
       _benchmark.workerType = workerType;
     }
+
+    console.log(_benchmark);
 
     console.time("Completed test run");
 
@@ -614,6 +629,7 @@ const BenchmarkPage = ({
       setErrors={setErrors}
       snippets={snippets}
       sharedSnippet={sharedSnippet}
+      setTransform={setTransform}
       setSnippets={setSnippets}
       runState={runState}
       setRunState={setRunState}

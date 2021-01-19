@@ -24,7 +24,8 @@ export const SnippetList = ({
   focusedId,
   errors = [],
   setFocusedID,
-
+  transform,
+  setTransform,
   snippets,
   setSnippets,
   sharedSnippet,
@@ -192,12 +193,14 @@ export const SnippetList = ({
       {showShared && (
         <SnippetContainer
           disableTitle
+          setTransform={setTransform}
+          transform={transform}
           icon={<SharedIcon className={"SnippetIcon"} />}
           placeholder={"Shared code"}
           code={sharedSnippet.code}
           onChangeCode={onChangeSharedSnippet}
           showImportModal={showImportModal}
-          key={"show" + showImportModal}
+          key={"show" + showImportModal + "-" + transform}
           setShowImportModal={setShowImportModal}
           codePlaceholder={
             "Insert JavaScript code that runs before all benchmarks in here"

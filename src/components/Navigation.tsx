@@ -22,14 +22,8 @@ export const NavigationLink = ({ to, children, activePages }) => {
 export const Navigation = ({}) => {
   return (
     <nav className={"NavigationContainer"}>
-      <NavigationLink activePages={["/", "/new"]} to={"/new"}>
+      <NavigationLink activePages={["/", "/benches/new"]} to={"/benches/new"}>
         New
-      </NavigationLink>
-      <NavigationLink activePages={["/explore"]} to={"/explore"}>
-        Explore
-      </NavigationLink>
-      <NavigationLink activePages={["/login"]} to={"/login"}>
-        Login
       </NavigationLink>
     </nav>
   );

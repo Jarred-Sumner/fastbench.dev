@@ -33,71 +33,13 @@ export default function Home() {
             Test, compare, and optimize JavaScript performance. Share your
             results with the world for a better web. TODO: improve copy.
           </p>
-          <LinkButton href={"/new"}>New benchmark</LinkButton>
+          <LinkButton href={"/benches/new"}>New benchmark</LinkButton>
         </main>
-        <div className={"Hero-demo"}>
-          <ResultCard
-            results={SAMPLE_DATA[0]}
-            title={"Array loops"}
-            href={"/r/123"}
-            colorScheme={CardColorScheme.blue}
-          />
-        </div>
+        <div className={"Hero-demo"}></div>
       </div>
 
       <div className={"Gallery"}>
-        <div className={"GalleryList"}>
-          <AsyncShareCard
-            results={[...fixture.result.toResults(fixture.snippets)]}
-            baseline={fixture.result.toResults(fixture.snippets)[0]}
-            fastest={fixture.result.toResults(fixture.snippets)[1]}
-            title={"Array loops"}
-            href={"/r/123"}
-            colorScheme={"default"}
-          />
-          <ResultCard
-            results={SAMPLE_DATA[0]}
-            title={"Array loops"}
-            href={"/r/123"}
-            colorScheme={CardColorScheme.blue}
-          />
-          <ResultCard
-            results={SAMPLE_DATA[0]}
-            title={"Array loops"}
-            href={"/r/123"}
-            colorScheme={CardColorScheme.blue}
-          />
-          <ResultCard
-            results={SAMPLE_DATA[0]}
-            title={"Array loops"}
-            href={"/r/123"}
-            colorScheme={CardColorScheme.blue}
-          />
-          <ResultCard
-            results={SAMPLE_DATA[0]}
-            title={"Array loops"}
-            href={"/r/123"}
-            colorScheme={CardColorScheme.blue}
-          />
-          <ResultCard
-            results={SAMPLE_DATA[0]}
-            title={"Array loops"}
-            href={"/r/123"}
-            colorScheme={CardColorScheme.blue}
-          />
-          <ResultCard
-            results={SAMPLE_DATA[0]}
-            title={"Array loops"}
-            href={"/r/123"}
-            colorScheme={CardColorScheme.blue}
-          />
-          <ResultCard
-            results={SAMPLE_DATA[0]}
-            title={"Array loops"}
-            href={"/r/123"}
-            colorScheme={CardColorScheme.blue}
-          />
-        </div>
+        <div className={"GalleryList"}></div>
       </div>
     </div>
   );

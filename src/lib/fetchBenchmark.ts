@@ -27,7 +27,7 @@ function sortResult(a: Result, b: Result) {
   }
 }
 
-export async function fetchBenchmark(version, id) {
+export async function fetchBenchmark(version, id, index = -1) {
   const [benchmarkResp, resultResp] = await Promise.all([
     fetch(joinBenchmarkURL(id, version, "package.json")),
     fetch(joinBenchmarkURL(id, version, RESULTS_FILENAME)),
@@ -41,7 +41,7 @@ export async function fetchBenchmark(version, id) {
 
   let maxOps = Infinity;
   const results = benchmarkResults
-    .toResults(benchmark.snippets)
+    .toResults(benchmark.snippets, index)
     .filter((a) => a.operationsPerSecond !== 0)
     .sort((a, b) => {
       maxOps = Math.min(a.operationsPerSecond, b.operationsPerSecond, maxOps);

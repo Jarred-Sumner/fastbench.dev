@@ -4,6 +4,7 @@ import * as React from "react";
 import { formatDecimal, formatLongDecimal, Result } from "./ResultCard";
 import { ModulePicker } from "src/components/ModulePicker";
 import { camelCase } from "lodash";
+import { TransformType } from "src/lib/Benchmark";
 
 const SnippetTitle = ({
   title,
@@ -16,6 +17,8 @@ const SnippetTitle = ({
   onPickImport,
   onShowImportModal,
   onCloseImportModal,
+  setTransform,
+  transform,
 }) => {
   return (
     <div className="SnippetTitleContainer">
@@ -40,18 +43,71 @@ const SnippetTitle = ({
       )}
 
       {onShowImportModal && (
-        <div className="SnippetTitle-importButtonContainer">
-          <div
-            onClick={onShowImportModal}
-            className="SnippetTitle-importButton"
-          >
-            + IMPORT
-          </div>
+        <SharedHeadingToolbar
+          showImportModal={showImportModal}
+          transform={transform}
+          setTransform={setTransform}
+          onShowImportModal={onShowImportModal}
+          onCloseImportModal={onCloseImportModal}
+          onPickImport={onPickImport}
+        />
+      )}
+    </div>
+  );
+};
 
-          {showImportModal && (
-            <ModulePicker onClose={onCloseImportModal} onPick={onPickImport} />
-          )}
-        </div>
+const SharedHeadingToolbar = ({
+  showImportModal,
+  transform,
+  setTransform,
+  onShowImportModal,
+  onCloseImportModal,
+  onPickImport,
+}) => {
+  const checkbox = React.useRef<HTMLInputElement>();
+  const setChecked = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = checkbox.current.checked
+        ? TransformType.none
+        : TransformType.jsx;
+      setTransform(newValue);
+      event.stopPropagation();
+    },
+    [setTransform]
+  );
+
+  const toggleTransform = React.useCallback(
+    (event: React.MouseEvent<HTMLInputElement>) => {
+      const newValue =
+        transform === TransformType.none
+          ? TransformType.jsx
+          : TransformType.none;
+      setTransform(newValue);
+    },
+    [setTransform, transform, checkbox]
+  );
+  const checked = transform === TransformType.jsx;
+  return (
+    <div className="SnippetTitle-importButtonContainer">
+      <div
+        onClick={toggleTransform}
+        className={classNames("SnippetTitle-transformField", {
+          "SnippetTitle-transformField--checked": checked,
+          "SnippetTitle-transformField--unchecked": !checked,
+        })}
+      >
+        <div className="Toggler" name="Toggler" />
+        <label htmlFor="Toggler" className="SnippetTitle-transformField-label">
+          &lt;JSX&gt;
+        </label>
+      </div>
+
+      <div onClick={onShowImportModal} className="SnippetTitle-importButton">
+        + IMPORT
+      </div>
+
+      {showImportModal && (
+        <ModulePicker onClose={onCloseImportModal} onPick={onPickImport} />
       )}
     </div>
   );
@@ -65,6 +121,8 @@ const SnippetHeading = ({
   onChange,
   onDelete,
   showImportModal,
+  transform,
+  setTransform,
   onShowImportModal,
   onCloseImportModal,
   onPickImport,
@@ -102,18 +160,14 @@ const SnippetHeading = ({
       )}
 
       {onShowImportModal && (
-        <div className="SnippetTitle-importButtonContainer">
-          <div
-            onClick={onShowImportModal}
-            className="SnippetTitle-importButton"
-          >
-            + IMPORT
-          </div>
-
-          {showImportModal && (
-            <ModulePicker onClose={onCloseImportModal} onPick={onPickImport} />
-          )}
-        </div>
+        <SharedHeadingToolbar
+          showImportModal={showImportModal}
+          transform={transform}
+          setTransform={setTransform}
+          onShowImportModal={onShowImportModal}
+          onCloseImportModal={onCloseImportModal}
+          onPickImport={onPickImport}
+        />
       )}
 
       <div className="SnippetHeading-subheader">
@@ -166,6 +220,8 @@ export const SnippetContainer = ({
   icon,
   placeholder,
   onDelete,
+  transform,
+  setTransform,
 
   runState,
   onChangeTitle: _onChangeTitle,
@@ -262,6 +318,8 @@ export const SnippetContainer = ({
           disabled={disableTitle}
           placeholder={placeholder}
           icon={icon}
+          transform={transform}
+          setTransform={setTransform}
           result={result}
           onDelete={!disableTitle && onDelete ? _onDelete : null}
           onPickImport={disableTitle ? onPickImport : null}
@@ -276,6 +334,8 @@ export const SnippetContainer = ({
           disabled={disableTitle}
           placeholder={placeholder}
           icon={icon}
+          transform={transform}
+          setTransform={setTransform}
           onDelete={!disableTitle && onDelete ? _onDelete : null}
           onPickImport={disableTitle ? onPickImport : null}
           showImportModal={disableTitle ? showImportModal : null}
