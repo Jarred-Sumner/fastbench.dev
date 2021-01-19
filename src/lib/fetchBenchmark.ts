@@ -42,6 +42,7 @@ export async function fetchBenchmark(version, id) {
   let maxOps = Infinity;
   const results = benchmarkResults
     .toResults(benchmark.snippets)
+    .filter((a) => a.operationsPerSecond !== 0)
     .sort((a, b) => {
       maxOps = Math.min(a.operationsPerSecond, b.operationsPerSecond, maxOps);
 

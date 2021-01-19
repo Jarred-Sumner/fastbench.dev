@@ -73,7 +73,7 @@ const SnippetHeading = ({
   title: string;
   result: Result;
 }) => {
-  let ops = result.operationsPerSecond ?? 0;
+  let ops = result?.operationsPerSecond ?? 0;
   ops = ops > 1000 ? Math.trunc(ops) : ops;
 
   return (

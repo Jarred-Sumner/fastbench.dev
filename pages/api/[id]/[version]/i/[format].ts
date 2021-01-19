@@ -272,6 +272,7 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     id
   );
   let fastest, baseline;
+
   for (let result of results) {
     if (!fastest) {
       fastest = result;

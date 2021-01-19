@@ -140,13 +140,20 @@ export function ShareCard({
     titleFontWeight,
   } = theme;
 
+  const scoreRange = fastest.multiplier - baseline.multiplier;
+
   const renderProgressBar = React.useCallback(
     (result: Result, index: number) => {
       return (
         <ResultProgressBar
           value={
-            Math.max(0, Math.min(getScore(result, baseline), 1)) *
-            PROGRESS_BAR_WIDTH
+            Math.max(
+              Math.min(
+                result.operationsPerSecond / fastest.operationsPerSecond,
+                1
+              ),
+              0
+            ) * PROGRESS_BAR_WIDTH
           }
           rank={result.rank}
           index={index}
@@ -155,7 +162,7 @@ export function ShareCard({
         />
       );
     },
-    [baseline, fastest, theme, ResultProgressBar, getScore]
+    [baseline, fastest, theme, ResultProgressBar, getScore, scoreRange]
   );
 
   const renderLabel = React.useCallback(
