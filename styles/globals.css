@@ -1109,3 +1109,46 @@ a.ResultListSection--subHeading-section:hover {
   padding: 4px 6px;
   margin-left: 8px;
 }
+
+.BenchmarkHeader--mobile {
+  display: none;
+}
+@media (max-width: 600px) {
+  :root {
+    --padding-horizontal: 16px;
+  }
+
+  .BenchmarkHeader--mobile {
+    display: flex;
+  }
+  .BenchmarkHeader--desktop {
+    display: none;
+  }
+
+  .ResultListSection--subHeading-separator {
+    display: none;
+  }
+
+  .ResultListSection--subHeading {
+    grid-auto-flow: row;
+    white-space: normal;
+    grid-auto-columns: auto;
+    --page-width: auto;
+  }
+
+  .ResultLongListItem-statGroup {
+    display: flex;
+    max-width: 100%;
+    width: auto;
+    justify-content: space-between;
+    padding-right: var(--padding-horizontal);
+  }
+
+  .CodeContainer {
+    zoom: 0.8;
+  }
+
+  .BenchmarkHeader {
+    flex-direction: column;
+  }
+}

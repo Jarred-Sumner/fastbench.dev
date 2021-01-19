@@ -38,6 +38,11 @@ import {
   unloadWorkers,
   WorkerType,
 } from "src/lib/BenchmarkRunnerWorker";
+import smoothscroll from "smoothscroll-polyfill";
+
+if (typeof window !== "undefined") {
+  smoothscroll.polyfill();
+}
 
 let SAMPLE_DATA;
 
@@ -325,7 +330,7 @@ export const ShowBenchmarkPage = ({
   return (
     <div className={"Page NewBenchmarkPage"}>
       <PageHeader>
-        <div className={"BenchmarkHeader"}>
+        <div className={"BenchmarkHeader BenchmarkHeader--desktop"}>
           <TitleInput
             href={router.asPath}
             defaultValue={benchmark.name}
@@ -342,6 +347,24 @@ export const ShowBenchmarkPage = ({
           </div>
         </div>
       </PageHeader>
+
+      <div className={"BenchmarkHeader BenchmarkHeader--mobile"}>
+        <TitleInput
+          href={router.asPath}
+          defaultValue={benchmark.name}
+          placeholder="Untitled benchmark"
+          onInput={handleTitleChangeEvent}
+        />
+
+        <div className={"RunTestButtonContainer"}>
+          <RunBenchmarkButton
+            onCancel={onCancelTest}
+            onRunTest={onRunTest}
+            runState={runState}
+          />
+        </div>
+      </div>
+
       {runState === SnippetRunState.ran ? (
         <ViewBenchmarkSEOTags
           id={router.query.id}
@@ -517,6 +540,10 @@ const BenchmarkPage = ({
   const onRunTest = React.useCallback(() => {
     let _benchmark: Benchmark = benchmark;
     setRunState(SnippetRunState.running);
+    document?.querySelector(".SnippetList")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
 
     let updateType: BenchmarkUpdateType;
 
