@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "compile-kiwi": "kiwic --schema src/lib/schema.kiwi --js src/lib/schema.js --ts src/lib/schema.d.ts --binary src/lib/schema.kiwib",
-    "prebuild": "node buildIframe.js",
+    "prebuild": "yarn compile-kiwi",
     "build": "next build",
     "start": "next start",
     "postbuild": "yum install libuuid-devel libmount-devel && cp /lib64/{libuuid,libmount,libblkid}.so.1 node_modules/canvas/build/Release/"

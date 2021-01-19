@@ -406,6 +406,8 @@ const BenchmarkPage = ({
         )
   );
 
+  const originalName = _defaultBenchmark?.name;
+
   const workerType = benchmark.workerType;
   const onCancelTest = React.useCallback(() => {
     runner.cancel();
@@ -481,7 +483,8 @@ const BenchmarkPage = ({
     });
   }, [setErrors, snippets, snippets.length]);
 
-  const isNewBenchmark = router.query.version === "new";
+  const isNewBenchmark =
+    router.query.version === "new" || originalName !== benchmark.name;
 
   const onRunTest = React.useCallback(() => {
     let _benchmark: Benchmark = benchmark;
