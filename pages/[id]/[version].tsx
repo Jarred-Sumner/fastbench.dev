@@ -4,6 +4,7 @@ import { GetStaticPropsContext } from "next";
 import {
   Benchmark,
   benchmarkGithubPackagePath,
+  BenchmarkUpdateType,
   joinBenchmarkURL,
   RESULTS_FILENAME,
 } from "src/lib/Benchmark";
@@ -42,17 +43,67 @@ if (process.env.NODE_ENV === "production") {
   SAMPLE_DATA = [[], [], []];
 } else {
   SAMPLE_DATA = [
-    ["var a = new Array(100)\nvar b = new Array();"],
+    [
+      `import _ from "https://cdn.skypack.dev/lodash";\nimport {fill, sample} from "https://cdn.skypack.dev/lodash";\nimport * as lodash from "https://cdn.skypack.dev/lodash";var a = new Array(100)\nvar b = new Array();`,
+    ],
     ["a.fill(100);", "[].fill"],
+    [`_.fill(a, 100);`, "_.fill"],
     [`for (let i = 0; i  < 100; i++) { b.push(100); }`, "[].push"],
   ];
 }
 
-async function uploadBenchmark(benchmark: Benchmark, results) {
+async function uploadBenchmark(
+  benchmark: Benchmark,
+  results,
+  updateType: BenchmarkUpdateType
+) {
+  for (let result of results) {
+    if (result.result?.statsSamples?.buffer) {
+      result.result.statsSamples = Array.from(result.result.statsSamples);
+    }
+
+    if (result.result?.stats?.samples?.buffer) {
+      result.result.stats.samples = Array.from(result.result.stats.samples);
+    }
+  }
   return globalThis
     .fetch(`/api/snippets`, {
       method: "POST",
-      body: JSON.stringify({ benchmark: benchmark.toJSON(), results }),
+      body: JSON.stringify({
+        benchmark: benchmark.toJSON(),
+        results,
+        updateType,
+        slug: benchmark.parentDirectory,
+        version: benchmark.version,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+    .then((resp) => resp.json());
+}
+
+async function uploadResults(benchmark: Benchmark, results) {
+  for (let result of results) {
+    if (result.result?.statsSamples?.buffer) {
+      result.result.statsSamples = Array.from(result.result.statsSamples);
+    }
+
+    if (result.result?.stats?.samples?.buffer) {
+      result.result.stats.samples = Array.from(result.result.stats.samples);
+    }
+  }
+
+  return globalThis
+    .fetch(`/api/results`, {
+      method: "POST",
+      body: JSON.stringify({
+        benchmark: benchmark.toJSON(),
+        id: benchmark.id,
+        slug: benchmark.parentDirectory,
+        version: benchmark.version,
+        results,
+      }),
       headers: {
         "Content-Type": "application/json",
       },
@@ -197,6 +248,8 @@ export const ShowBenchmarkPage = ({
   setSnippets,
   onCancelTest,
   setTitle,
+  isDirty,
+  setDirty: _setDirty,
 }: {
   results: Result[];
   benchmark: Benchmark;
@@ -204,7 +257,6 @@ export const ShowBenchmarkPage = ({
   const router = useRouter();
 
   const [focusedId, setFocusedID] = React.useState();
-  const [isDirty, _setDirty] = React.useState(false);
 
   const setDirty = React.useCallback(() => {
     _setDirty(true);
@@ -315,6 +367,7 @@ const BenchmarkPage = ({
   benchmarkResults: defaultBenchmarkResults,
   runState: defaultRunState,
 }) => {
+  const [isDirty, setDirty] = React.useState(false);
   const router = useRouter();
   const [runState, setRunState] = React.useState<SnippetRunState>(
     defaultRunState
@@ -380,16 +433,18 @@ const BenchmarkPage = ({
       }
 
       setBenchmark(benchmark.clone());
+      setDirty();
     },
-    [benchmark, setBenchmark]
+    [benchmark, setBenchmark, setDirty]
   );
 
   const setTitle = React.useCallback(
     (title) => {
       benchmark.name = title;
       setBenchmark(benchmark.clone());
+      setDirty();
     },
-    [benchmark, setBenchmark]
+    [benchmark, setBenchmark, setDirty]
   );
 
   const snippets = benchmark.snippets;
@@ -405,32 +460,54 @@ const BenchmarkPage = ({
     });
   }, [setErrors, snippets, snippets.length]);
 
+  const isNewBenchmark = router.query.version === "new";
+
   const onRunTest = React.useCallback(() => {
+    let _benchmark: Benchmark = benchmark;
     setRunState(SnippetRunState.running);
-    const filteredSnippets = snippets.slice();
-    for (let i = 0; i < filteredSnippets.length; i++) {
-      const snippet = filteredSnippets[i];
 
-      if (!snippet.hasCode()) {
-        filteredSnippets.splice(i, 1);
-      } else if (!snippet.name.trim().length) {
-        snippet.name = snippet.code.substring(0, 12);
+    let updateType: BenchmarkUpdateType;
+
+    if (isDirty && isNewBenchmark) {
+      updateType = BenchmarkUpdateType.create;
+    } else if (!isNewBenchmark && isDirty) {
+      updateType = BenchmarkUpdateType.fork;
+    } else {
+      updateType = BenchmarkUpdateType.results;
+    }
+
+    if (updateType !== BenchmarkUpdateType.results) {
+      const filteredSnippets = snippets.slice();
+      for (let i = 0; i < filteredSnippets.length; i++) {
+        const snippet = filteredSnippets[i];
+
+        if (!snippet.hasCode()) {
+          filteredSnippets.splice(i, 1);
+        } else if (!snippet.name.trim().length) {
+          snippet.name = snippet.code.substring(0, 12);
+        }
       }
+
+      if (updateType === BenchmarkUpdateType.fork) {
+        _benchmark = new Benchmark(
+          filteredSnippets,
+          sharedSnippet,
+          title,
+          benchmark.id,
+          benchmark.version
+        );
+      } else {
+        _benchmark = new Benchmark(filteredSnippets, sharedSnippet, title);
+      }
+
+      if (!_benchmark.name.trim().length) {
+        _benchmark.name = _benchmark.snippets.map((s) => s.name).join(" vs ");
+      }
+
+      _benchmark.workerType = workerType;
     }
 
-    const _benchmark = new Benchmark(
-      filteredSnippets,
-      sharedSnippet,
-      title,
-      benchmark.id,
-      benchmark.version
-    );
-
-    if (!_benchmark.name.trim().length) {
-      _benchmark.name = _benchmark.snippets.map((s) => s.name).join(" vs ");
-    }
     console.time("Completed test run");
-    _benchmark.workerType = workerType;
 
     runner.run(_benchmark, workers.current).then(
       (results) => {
@@ -447,23 +524,32 @@ const BenchmarkPage = ({
           setBenchmark(_benchmark);
           runner.cleanup();
           setRunState(SnippetRunState.ran);
-          uploadBenchmark(_benchmark, results).then(
-            ({ value: benchmark, error, message }) => {
-              if (error) {
-                alert(message);
-                return;
+
+          if (updateType < BenchmarkUpdateType.results) {
+            uploadBenchmark(_benchmark, results, updateType).then(
+              ({ value: benchmark, error, message }) => {
+                if (error) {
+                  alert(message);
+                  return;
+                }
+                router.replace(
+                  "/[id]/[version]",
+                  benchmark.url.replace("https://fastbench.dev", ""),
+                  { shallow: true }
+                );
               }
-              router.replace(
-                "/[id]/[version]",
-                benchmark.url.replace("https://fastbench.dev", ""),
-                { shallow: true }
-              );
-            }
-          );
+            );
+          } else {
+            uploadResults(_benchmark, results).then(() => {
+              console.log("Uploaded results.");
+            });
+          }
         } else {
           setRunState(SnippetRunState.pending);
           runner.cleanup();
         }
+
+        setDirty(false);
       },
       (err) => {
         console.timeEnd("Completed test run");
@@ -489,6 +575,7 @@ const BenchmarkPage = ({
         setRunState(SnippetRunState.pending);
         console.error(err);
         runner.cleanup();
+        setDirty(false);
       }
     );
   }, [
@@ -497,9 +584,12 @@ const BenchmarkPage = ({
     setResults,
     setErrors,
     router,
+    isNewBenchmark,
     title,
     setBenchmarkResult,
     workers,
+    isDirty,
+    setDirty,
     runner,
     setRunState,
     workerType,
@@ -511,6 +601,8 @@ const BenchmarkPage = ({
     <ShowBenchmarkPage
       workers={workers}
       runner={runner}
+      setDirty={setDirty}
+      isDirty={isDirty}
       benchmark={benchmark}
       results={results}
       onRunTest={onRunTest}

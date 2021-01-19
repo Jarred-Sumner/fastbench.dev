@@ -271,6 +271,20 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     version,
     id
   );
+  let fastest, baseline;
+  for (let result of results) {
+    if (!fastest) {
+      fastest = result;
+    } else if (result.operationsPerSecond > fastest.operationsPerSecond) {
+      fastest = result;
+    }
+
+    if (!baseline) {
+      baseline = result;
+    } else if (result.operationsPerSecond < baseline.operationsPerSecond) {
+      baseline = result;
+    }
+  }
 
   switch (req.method) {
     case "GET": {
@@ -291,8 +305,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           try {
             const svg = await renderShareCardPNG(
               results,
-              results[0],
-              results[results.length - 1],
+              fastest,
+              baseline,
               benchmark.name
             );
             res.setHeader("Content-Type", "image/png");
@@ -313,8 +327,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         case "svg": {
           const svg = await renderShareCardSVG(
             results,
-            results[0],
-            results[results.length - 1],
+            baseline,
+            fastest,
             benchmark.name
           );
           res.setHeader("Content-Type", "image/svg+xml");

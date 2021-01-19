@@ -29,6 +29,12 @@ export function benchmarkGithubPackagePath(slug: string, version: string) {
   return path.join(slug, String(version), "package.json");
 }
 
+export enum BenchmarkUpdateType {
+  create = 0,
+  fork = 1,
+  results = 2,
+}
+
 export class Benchmark {
   snippets: Snippet[];
   shared: Snippet;

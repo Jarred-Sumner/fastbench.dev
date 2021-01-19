@@ -2,6 +2,8 @@ import classNames from "classnames";
 import { CodeEditor } from "./CodeEditor";
 import * as React from "react";
 import { formatDecimal, formatLongDecimal, Result } from "./ResultCard";
+import { ModulePicker } from "src/components/ModulePicker";
+import { camelCase } from "lodash";
 
 const SnippetTitle = ({
   title,
@@ -10,6 +12,10 @@ const SnippetTitle = ({
   disabled,
   icon,
   onDelete,
+  showImportModal,
+  onPickImport,
+  onShowImportModal,
+  onCloseImportModal,
 }) => {
   return (
     <div className="SnippetTitleContainer">
@@ -32,6 +38,21 @@ const SnippetTitle = ({
           DELETE
         </div>
       )}
+
+      {onShowImportModal && (
+        <div className="SnippetTitle-importButtonContainer">
+          <div
+            onClick={onShowImportModal}
+            className="SnippetTitle-importButton"
+          >
+            + IMPORT
+          </div>
+
+          {showImportModal && (
+            <ModulePicker onClose={onCloseImportModal} onPick={onPickImport} />
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -43,6 +64,10 @@ const SnippetHeading = ({
   baseline,
   onChange,
   onDelete,
+  showImportModal,
+  onShowImportModal,
+  onCloseImportModal,
+  onPickImport,
 }: {
   icon: React.ReactNode;
   title: string;
@@ -73,6 +98,21 @@ const SnippetHeading = ({
       {onDelete && (
         <div onClick={onDelete} className="SnippetTitle-deleteButton">
           DELETE
+        </div>
+      )}
+
+      {onShowImportModal && (
+        <div className="SnippetTitle-importButtonContainer">
+          <div
+            onClick={onShowImportModal}
+            className="SnippetTitle-importButton"
+          >
+            + IMPORT
+          </div>
+
+          {showImportModal && (
+            <ModulePicker onClose={onCloseImportModal} onPick={onPickImport} />
+          )}
         </div>
       )}
 
@@ -136,6 +176,8 @@ export const SnippetContainer = ({
   onBlur,
   onFocus,
   focusedId,
+  showImportModal,
+  setShowImportModal,
   id,
   codePlaceholder,
   code,
@@ -181,6 +223,24 @@ export const SnippetContainer = ({
     onDelete && onDelete(id);
   }, [onDelete, id]);
 
+  const onShowImportModal = React.useCallback(() => {
+    setShowImportModal(true);
+  }, [setShowImportModal]);
+
+  const onCloseImportModal = React.useCallback(() => {
+    setShowImportModal(false);
+  }, [setShowImportModal]);
+
+  const onPickImport = React.useCallback(
+    (name, importUrl) => {
+      onChangeCode(`import ${camelCase(name)} from "${importUrl}";\n` + code);
+      setShowImportModal(false);
+    },
+    [onChangeCode, code, camelCase]
+  );
+
+  const defaultCode = React.useRef<string>(code);
+
   return (
     <div
       onClick={onChangeCollapse}
@@ -190,6 +250,7 @@ export const SnippetContainer = ({
         "SnippetContainer--visible": !isCollapsed,
         "SnippetContainer--isRunning": runState === SnippetRunState.running,
         "SnippetContainer--ran": runState === SnippetRunState.ran,
+        "SnippetContainer--unposition": !disableTitle && showImportModal,
       })}
     >
       <SnippetBackground ref={progressUpdateRef} />
@@ -203,6 +264,10 @@ export const SnippetContainer = ({
           icon={icon}
           result={result}
           onDelete={!disableTitle && onDelete ? _onDelete : null}
+          onPickImport={disableTitle ? onPickImport : null}
+          showImportModal={disableTitle ? showImportModal : null}
+          onShowImportModal={disableTitle ? onShowImportModal : null}
+          onCloseImportModal={disableTitle ? onCloseImportModal : null}
         />
       ) : (
         <SnippetTitle
@@ -212,12 +277,16 @@ export const SnippetContainer = ({
           placeholder={placeholder}
           icon={icon}
           onDelete={!disableTitle && onDelete ? _onDelete : null}
+          onPickImport={disableTitle ? onPickImport : null}
+          showImportModal={disableTitle ? showImportModal : null}
+          onShowImportModal={disableTitle ? onShowImportModal : null}
+          onCloseImportModal={disableTitle ? onCloseImportModal : null}
         />
       )}
 
       {!isCollapsed && (
         <CodeEditor
-          defaultValue={code}
+          defaultValue={defaultCode.current}
           onChange={onChangeCode}
           placeholder={codePlaceholder}
         />

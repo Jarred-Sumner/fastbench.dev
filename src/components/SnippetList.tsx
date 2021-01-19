@@ -24,6 +24,7 @@ export const SnippetList = ({
   focusedId,
   errors = [],
   setFocusedID,
+
   snippets,
   setSnippets,
   sharedSnippet,
@@ -33,8 +34,11 @@ export const SnippetList = ({
   results = [],
 }) => {
   const onChangeSharedSnippet = React.useCallback(
-    (code) => (sharedSnippet.code = code),
-    [sharedSnippet]
+    (code) => {
+      sharedSnippet.code = code;
+      setDirty();
+    },
+    [sharedSnippet, setDirty]
   );
 
   const updateCode = React.useCallback(
@@ -85,6 +89,7 @@ export const SnippetList = ({
       return _snippets;
     });
     setRunState(SnippetRunState.pending);
+    setDirty();
   }, [setSnippets, Snippet.create, setRunState]);
 
   const removeSnippet = React.useCallback(
@@ -99,6 +104,7 @@ export const SnippetList = ({
         return _snippets;
       });
       setRunState(SnippetRunState.pending);
+      setDirty();
     },
     [setSnippets, Snippet.create, setRunState]
   );
@@ -114,6 +120,8 @@ export const SnippetList = ({
     runner.progressBarRefs = progressUpdateRefs[0];
     runner.opsRefs = progressUpdateRefs[1];
   }, [progressUpdateRefs, runner]);
+
+  const [showImportModal, setShowImportModal] = React.useState(false);
 
   const renderSnippetContainer = React.useCallback(
     (snippet: Snippet, index: number) => {
@@ -144,6 +152,7 @@ export const SnippetList = ({
           code={snippet.code}
           onDelete={snippets.length > 1 ? removeSnippet : null}
           runState={runState}
+          showImportModal={showImportModal}
           codePlaceholder={"Insert JavaScript benchmark code in here."}
           onChangeCode={updateCode}
           id={snippet.id}
@@ -164,7 +173,8 @@ export const SnippetList = ({
       snippets,
       focusedId,
       results,
-
+      showImportModal,
+      setShowImportModal,
       errors,
       removeSnippet,
       errors.length,
@@ -186,6 +196,9 @@ export const SnippetList = ({
           placeholder={"Shared code"}
           code={sharedSnippet.code}
           onChangeCode={onChangeSharedSnippet}
+          showImportModal={showImportModal}
+          key={"show" + showImportModal}
+          setShowImportModal={setShowImportModal}
           codePlaceholder={
             "Insert JavaScript code that runs before all benchmarks in here"
           }

@@ -2,7 +2,9 @@ import { MessageType, StatusMessageType } from "src/WorkerMessage";
 import { transformSync } from "esbuild";
 import { Benchmark } from "./lib/Benchmark";
 import type { default as BenchmarkType } from "benchmark";
-import { DH_NOT_SUITABLE_GENERATOR } from "constants";
+import type { LexerType } from "src/parseImports";
+
+let parseImports;
 
 let Suite;
 
@@ -69,7 +71,97 @@ function emitStatusMessage(status: StatusMessageType) {
   postMessage(statusMessage);
 }
 
-function start(
+const importsList = (globalThis.bi = {});
+const globalImportVariable = "globalThis.bi";
+
+async function processImports(__code: string) {
+  let code = __code;
+  if (!code || !code.length) {
+    return code;
+  }
+
+  if (!parseImports) {
+    parseImports = (await import("src/parseImports")).default;
+  }
+
+  const imports: LexerType[] = await parseImports(code);
+
+  if (imports.length === 0) {
+    return code;
+  }
+
+  let newCode = code.slice();
+
+  for (let importStatement of imports) {
+    const path = code.substring(importStatement.s, importStatement.e);
+    let innerImportContent = code.substring(
+      importStatement.ss,
+      importStatement.s
+    );
+    innerImportContent = innerImportContent
+      .substring(
+        Math.max(
+          innerImportContent.indexOf("import ") + "import ".length - 1,
+          0
+        )
+      )
+      .trim();
+
+    innerImportContent = innerImportContent
+      .substring(0, innerImportContent.lastIndexOf("from"))
+      .trim();
+
+    const wildcard = innerImportContent.includes("*")
+      ? innerImportContent.replace("* as ", "").trim()
+      : null;
+
+    const named = innerImportContent.includes("{")
+      ? innerImportContent
+          .substring(
+            innerImportContent.indexOf("{") + 1,
+            innerImportContent.lastIndexOf("}")
+          )
+          .replace(/ as /gm, ":")
+      : null;
+
+    let defaultImport: string = null;
+
+    if (!named && !wildcard && innerImportContent) {
+      defaultImport = innerImportContent;
+    }
+
+    if (!importsList[path]) {
+      const ESM = await import(
+        /* webpackIgnore: true */
+        path
+      );
+      importsList[path] = ESM;
+    }
+    console.log("Imported from", path);
+
+    let replacementCode = "";
+    if (wildcard) {
+      replacementCode += `var ${wildcard} = ${globalImportVariable}["${path}"];`;
+    }
+
+    if (defaultImport) {
+      replacementCode += `var ${defaultImport} = ${globalImportVariable}["${path}"].default;`;
+    }
+
+    if (named?.length) {
+      replacementCode += `var {${named}} = ${globalImportVariable}["${path}"];`;
+    }
+
+    newCode = newCode.replace(
+      code.substring(importStatement.ss, importStatement.se),
+      replacementCode
+    );
+  }
+
+  return newCode;
+}
+
+async function start(
   benchmark: Benchmark,
   snippetIndex: number,
   id: string | number
@@ -81,18 +173,33 @@ function start(
   }
 
   emitStatusMessage(StatusMessageType.aboutToStart);
-  let _suite: BenchmarkType.Suite = new Suite(snippet.name, {
-    maxTime: 30,
-    name: benchmark.name,
-  });
 
   function errorHandler(error) {
     postMessage({ type: MessageType.error, value: error, id });
     stopProgressUpdates();
   }
+  let snippetCode = snippet.code;
+  let sharedCode = benchmark?.shared?.code ?? null;
 
-  _suite.add(snippet.name, snippet.code, {
-    setup: benchmark?.shared?.code ?? null,
+  try {
+    if (snippetCode.includes("import")) {
+      snippetCode = await processImports(snippetCode);
+    }
+    if (sharedCode && sharedCode.includes("import")) {
+      sharedCode = await processImports(sharedCode);
+    }
+  } catch (exception) {
+    errorHandler(exception);
+    return;
+  }
+
+  let _suite: BenchmarkType.Suite = new Suite(snippet.name, {
+    maxTime: 30,
+    name: benchmark.name,
+  });
+
+  _suite.add(snippet.name, snippetCode, {
+    setup: sharedCode,
     onError: errorHandler,
     onCycle: ({ target: { stats, times, hz, cycles, error } }) => {
       if (error) {

@@ -37,7 +37,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
         resp = await persistBenchmark(
           benchmark,
           req.body.results,
-          req.headers["user-agent"]
+          req.headers["user-agent"],
+          req.body.updateType,
+          req.body.slug,
+          req.body.version
         );
       } catch (error) {
         badRequest("Error while saving benchmark", res);

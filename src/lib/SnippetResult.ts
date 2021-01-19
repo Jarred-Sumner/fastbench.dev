@@ -27,7 +27,7 @@ export class BenchmarkResult implements SchemaBenchmarkResults {
   benchmarkId: string;
   results: SnippetResultList[];
 
-  toResults(snippets: Snippet[]): Result[] {
+  toResults(snippets: Snippet[], index: number = -1): Result[] {
     const results = new Array<Result>(snippets.length);
     results.fill(null);
     let slowest: Result,
@@ -42,7 +42,8 @@ export class BenchmarkResult implements SchemaBenchmarkResults {
       for (; snippetResultI < this.results.length; snippetResultI++) {
         const result = this.results[snippetResultI];
         if (result && result.id === snippet?.id) {
-          snippetResult = result.results[result.results.length - 1];
+          snippetResult =
+            result.results[index === -1 ? result.results.length - 1 : index];
           break;
         }
       }

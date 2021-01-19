@@ -1,4 +1,4 @@
-import { Benchmark, RESULTS_FILENAME } from "./Benchmark";
+import { Benchmark, BenchmarkUpdateType, RESULTS_FILENAME } from "./Benchmark";
 import { Octokit } from "@octokit/rest";
 import createFetch from "@vercel/fetch";
 import path from "path";
@@ -30,13 +30,46 @@ const octokit = new Octokit({
 export async function persistBenchmark(
   benchmark: Benchmark,
   results: SnippetResult[],
-  userAgent: string
+  userAgent: string,
+  updateType: BenchmarkUpdateType,
+  slug?: string,
+  version?: number
 ) {
-  if (benchmark.id) {
-    benchmark.version++;
-  } else {
-    benchmark.id = generateId();
-    benchmark.version = 0;
+  switch (updateType) {
+    case BenchmarkUpdateType.create: {
+      benchmark.id = generateId();
+      benchmark.version = 0;
+
+      break;
+    }
+
+    case BenchmarkUpdateType.fork: {
+      const dir = path.join(String(slug), "");
+      const url = `https://api.github.com/repos/${process.env.GITHUB_REPO_OWNER}/${process.env.GITHUB_REPO}/contents/${slug}?access_token=${process.env.GITHUB_ACCESS_TOKEN}`;
+      const contents = await (await fetch(url)).json();
+      let maxVersion = 0;
+      for (let content of contents) {
+        if (
+          content.type === "dir" &&
+          content.path.startsWith(dir) &&
+          content.path.split("/").length === 2
+        ) {
+          const rel = content.path.substring(content.path.indexOf("/") + 1);
+          let version = parseInt(rel, 10);
+          if (Number.isFinite(version)) {
+            maxVersion = Math.max(version, maxVersion);
+          }
+        }
+      }
+
+      benchmark.version = maxVersion + 1;
+      console.log("VERSION", benchmark.version);
+      break;
+    }
+
+    default: {
+      throw `Invalid updateType ${updateType}`;
+    }
   }
 
   const [files, packageJSON] = benchmark.toGithubDirectory();

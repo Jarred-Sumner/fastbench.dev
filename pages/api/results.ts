@@ -47,11 +47,11 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
 
       const result = benchmarkResult.result;
 
-      for (let snippetId in req.body.results) {
+      for (let snippetResult of req.body.results) {
         result.appendResult(
           userAgent,
-          snippetId,
-          SnippetResult.normalize(req.body.results[snippetId])
+          String(snippetResult.id),
+          SnippetResult.normalize(snippetResult.result)
         );
       }
 

@@ -144,7 +144,10 @@ export function ShareCard({
     (result: Result, index: number) => {
       return (
         <ResultProgressBar
-          value={getScore(result, baseline) * PROGRESS_BAR_WIDTH}
+          value={
+            Math.max(0, Math.min(getScore(result, baseline), 1)) *
+            PROGRESS_BAR_WIDTH
+          }
           rank={result.rank}
           index={index}
           key={result.id}
@@ -268,7 +271,11 @@ export function ShareCard({
                 flexShrink: 1,
               }}
             >
-              {formatDecimal(fastest.operationsPerSecond, 1)} ops/s
+              {formatDecimal(
+                fastest.operationsPerSecond,
+                fastest.operationsPerSecond > 100_000 ? 0 : 1
+              )}{" "}
+              ops/s
             </text>
           </g>
 
