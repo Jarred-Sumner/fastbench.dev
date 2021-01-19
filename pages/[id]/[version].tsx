@@ -164,6 +164,9 @@ async function fetchIndexFile(): Promise<IndexFileType> {
 export async function getStaticPaths() {
   // Call an external API endpoint to get posts
   const indexFile = await fetchIndexFile();
+  if (!indexFile?.benchmarks) {
+    return { paths: [], fallback: "blocking" };
+  }
 
   // Get the paths we want to pre-render based on posts
   const paths = Object.keys(indexFile.benchmarks)
