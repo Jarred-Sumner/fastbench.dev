@@ -306,8 +306,8 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
           try {
             const svg = await renderShareCardPNG(
               results,
-              fastest,
               baseline,
+              fastest,
               benchmark.name
             );
             res.setHeader("Content-Type", "image/png");
