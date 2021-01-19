@@ -20,6 +20,7 @@ import { TitleInput } from "src/components/TitleInput";
 import { useRouter } from "next/router";
 import { ResultList } from "src/components/ResultsList";
 import { fetchBenchmark } from "src/lib/fetchBenchmark";
+import DefaultErrorPage from "next/error";
 import {
   SHARE_CARD_HEIGHT,
   SHARE_CARD_WIDTH,
@@ -184,6 +185,12 @@ if (typeof window === "undefined") {
   fetch = require("@vercel/fetch")(require("node-fetch"));
 }
 
+enum PageType {
+  results,
+  new,
+  notFound,
+}
+
 export async function getStaticProps(context: GetStaticPropsContext) {
   if (context.params.id === "benches" && context.params.version === "new") {
     return {
@@ -192,24 +199,42 @@ export async function getStaticProps(context: GetStaticPropsContext) {
         benchmark: null,
         runState: SnippetRunState.pending,
         results: [],
+        type: PageType.new,
         benchmarkResults: [],
       }, // will be passed to the page component as props
     };
   } else {
-    const { benchmark, results, benchmarkResults } = await fetchBenchmark(
-      context.params.version,
-      context.params.id
-    );
+    try {
+      const { benchmark, results, benchmarkResults } = await fetchBenchmark(
+        context.params.version,
+        context.params.id
+      );
 
-    return {
-      revalidate: 5,
-      props: {
-        benchmark: benchmark.toJSON(),
-        runState: SnippetRunState.ran,
-        results,
-        benchmarkResults: JSON.parse(JSON.stringify(benchmarkResults, null, 2)),
-      }, // will be passed to the page component as props
-    };
+      return {
+        revalidate: 5,
+        props: {
+          benchmark: benchmark.toJSON(),
+          runState: SnippetRunState.ran,
+          results,
+          type: PageType.results,
+          benchmarkResults: JSON.parse(
+            JSON.stringify(benchmarkResults, null, 2)
+          ),
+        }, // will be passed to the page component as props
+      };
+    } catch (exception) {
+      console.error(exception);
+      return {
+        revalidate: false,
+        props: {
+          benchmark: null,
+          runState: SnippetRunState.pending,
+          results: [],
+          type: PageType.notFound,
+          benchmarkResults: [],
+        }, // will be passed to the page component as props
+      };
+    }
   }
 }
 
@@ -643,4 +668,36 @@ const BenchmarkPage = ({
   );
 };
 
-export default BenchmarkPage;
+const BenchmarkPageContainer = ({
+  benchmark,
+  results,
+  benchmarkResults,
+  runState,
+  type,
+}) => {
+  switch (type) {
+    case PageType.new:
+    case PageType.results: {
+      return (
+        <BenchmarkPage
+          benchmark={benchmark}
+          results={results}
+          benchmarkResults={benchmarkResults}
+          runState={runState}
+        />
+      );
+    }
+    case PageType.notFound: {
+      return (
+        <>
+          <Head>
+            <meta name="robots" content="noindex" />
+          </Head>
+          <DefaultErrorPage statusCode={404} />
+        </>
+      );
+    }
+  }
+};
+
+export default BenchmarkPageContainer;
