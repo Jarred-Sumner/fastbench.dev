@@ -547,7 +547,7 @@ const BenchmarkPage = ({
 
     let updateType: BenchmarkUpdateType;
 
-    if (isDirty && isNewBenchmark) {
+    if (isNewBenchmark) {
       updateType = BenchmarkUpdateType.create;
     } else if (!isNewBenchmark && isDirty) {
       updateType = BenchmarkUpdateType.fork;
