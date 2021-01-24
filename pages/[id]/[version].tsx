@@ -605,6 +605,8 @@ const BenchmarkPage = ({
                   alert(message);
                   return;
                 }
+                setBenchmark(Benchmark.fromJSON(benchmark.fastbench));
+
                 router.replace(
                   "/[id]/[version]",
                   benchmark.url.replace("https://fastbench.dev", ""),
@@ -656,6 +658,7 @@ const BenchmarkPage = ({
     sharedSnippet,
     setResults,
     setErrors,
+
     router,
     isNewBenchmark,
     title,
