@@ -588,6 +588,7 @@ h3 {
   text-align: left;
   margin-left: 21px;
   margin-right: 1ch;
+  opacity: 0.5;
 }
 
 .SnippetRank--first {
