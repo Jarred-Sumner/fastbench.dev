@@ -27,6 +27,11 @@ export function formatDecimal(num, precision = 1, includeUnit = true) {
     unit = "";
   }
 
+  if (value.toString().endsWith(".0")) {
+    value = value.toString();
+    value = value.substring(0, value.length - 2);
+  }
+
   if (includeUnit) {
     return `${value}${unit}`;
   } else {

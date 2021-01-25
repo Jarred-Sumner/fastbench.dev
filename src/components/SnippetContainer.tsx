@@ -197,11 +197,9 @@ const SnippetOverlay = React.forwardRef(({ result }, ref) => {
   return (
     <div className={"SnippetOverlay"}>
       <div className={"SnippetOverlayLabel"}>
-        <OpsLabel ref={ref} ops={result?.operationsPerSecond} />
+        <OpsLabel ref={ref} ops={result?.operationsPerSecond ?? 10000} />
         <span className={"SnippetOverlayLabel-unit"}> ops/s</span>
       </div>
-
-      <div className={"SnippetOverlay-Rank"}>{result?.rank}</div>
     </div>
   );
 });
@@ -357,7 +355,7 @@ export const SnippetContainer = ({
           {error.message}
 
           <div onClick={hideError} className="SnippetContainer-ErrorClose">
-            X
+            CLOSE
           </div>
         </div>
       )}

@@ -116,7 +116,7 @@ h3 {
   top: 0;
   z-index: 999;
   padding-bottom: 1.2em;
-  mask-image: linear-gradient(to bottom, black 85%, transparent)
+  mask-image: linear-gradient(to bottom, black 85%, transparent);
 }
 
 .LandingHeader {
@@ -396,11 +396,11 @@ h3 {
   cursor: pointer;
 }
 .TitleInput-container--readWrite .TitleInput:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .TitleInput-container--readWrite .TitleInput:focus {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .TitleInput,
@@ -451,23 +451,13 @@ h3 {
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: rgba(150, 2, 0, 0.5);
-  backdrop-filter: blur(2px);
-  padding: 6px 8px;
-}
+  background-color: #fe0100;
+  padding: 6px 14px;
 
-.SnippetContainer-ErrorClose {
-  position: absolute;
-  bottom: -5px;
-  right: 3px;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 12px;
-  transition: transform 0.1s linear;
-}
-
-.SnippetContainer-ErrorClose:hover {
-  transform: scale(1.25);
+  font-size: 0.8rem;
+  color: #ffffff;
+  font-weight: 500;
+  font-family: var(--heading-font);
 }
 
 .SnippetContainer .SnippetOverlay,
@@ -482,7 +472,9 @@ h3 {
   bottom: 0;
   right: 0;
   width: 100%;
-  z-index: 0;
+  height: 100%;
+  z-index: 999;
+  mix-blend-mode: difference;
   -webkit-user-select: none;
   user-select: none;
   pointer-events: none;
@@ -497,14 +489,12 @@ h3 {
 
 .SnippetOverlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  min-width: 100%;
-  min-height: 100%;
 
-  z-index: 9999;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  z-index: 1;
   -webkit-user-select: none;
   user-select: none;
   flex-direction: column;
@@ -512,21 +502,17 @@ h3 {
   font-family: var(--heading-font);
 
   pointer-events: none;
-  height: 100%;
-  transform-origin: bottom left;
-  transition: transform 0.12s linear;
-  transition-property: transform, backdrop-filter;
+  color: white;
 }
 
-.SnippetContainer--isRunning .SnippetOverlay {
+/* .SnippetContainer--isRunning .SnippetOverlay {
   transform: translateX(16px) translateY(100%) translateY(-2rem)
     translateY(-32px);
-}
+} */
 
 .SnippetOverlayLabel {
   font-size: 2rem;
-  color: black;
-  filter: drop-shadow(0px 0px 3px var(--color-brand));
+
   transition: filter 0.12s linear;
   transition-property: filter, color;
 }
@@ -551,11 +537,6 @@ h3 {
 .SnippetContainer--ran .SnippetOverlay,
 .SnippetContainer--isRunning .SnippetOverlay {
   display: flex;
-}
-
-.SnippetContainer--ran .SnippetOverlay {
-  transform: translateX(48px) translateY(0%) translateY(40%) translateY(72px)
-    scale(1.4, 1.4);
 }
 
 .SnippetContainer--ran .SnippetBackground {
@@ -612,10 +593,13 @@ h3 {
   position: relative;
 }
 
+.SnippetContainer-ErrorClose,
 .SnippetTitle-deleteButton {
   --color: rgb(153, 153, 153);
   --active-color: rgb(189, 58, 58);
+}
 
+.SnippetTitle-deleteButton {
   position: absolute;
   right: 0;
 }
@@ -649,7 +633,7 @@ h3 {
   width: 16px;
   height: 16px;
   border-radius: 0;
-  border: 2px solid rgba(255,255,255,0.3);
+  border: 2px solid rgba(255, 255, 255, 0.3);
   margin-right: 6px;
 }
 
@@ -670,6 +654,7 @@ h3 {
   color: var(--color-brand);
 }
 
+.SnippetContainer-ErrorClose,
 .SnippetTitle-transformField,
 .SnippetTitle-deleteButton,
 .SnippetTitle-importButton {
@@ -685,23 +670,38 @@ h3 {
   transition-property: transform, color;
 }
 
+.SnippetContainer-ErrorClose {
+  --translate-offset: -50%;
+  color: white;
+  position: absolute;
+  top: 50%;
+  transform: translateY(var(--translate-offset));
+  right: 0;
+}
+
 .SnippetTitle-importButton {
   --color: white;
   --active-color: var(--color-brand);
 }
 
+.SnippetContainer-ErrorClose:hover,
 .SnippetTitle-importButton:hover,
 .SnippetTitle-deleteButton:hover {
-  transform: scale(1.1, 1.1);
+  transform: translateY(var(--translate-offset, 0%)) scale(1.1, 1.1);
   color: var(--active-color);
 }
 
+.SnippetContainer-ErrorClose:active,
 .SnippetTitle-importButton:active,
 .SnippetTitle-deleteButton:active {
-  transform: scale(1.2, 1.2);
+  transform: translateY(var(--translate-offset, 0%)) scale(1.2, 1.2);
   color: var(--active-color);
 }
 
+.SnippetContainer-ErrorClose:hover,
+.SnippetContainer-ErrorClose:active {
+  color: white;
+}
 .SnippetTitleContainer {
   position: relative;
   z-index: 10;
@@ -768,30 +768,27 @@ h3 {
   margin: 0;
   min-width: 480px;
   max-width: var(--page-width);
-  border-radius: 48px;
+  border-radius: 0;
   border: 1px solid rgb(32, 32, 32);
   flex: 1;
   color: rgb(220, 220, 220);
   appearance: none;
-  background-color: rgb(20, 20, 20);
+  background-color: rgba(255, 255, 255, 0.1);
   box-shadow: none;
   font-family: var(--heading-font);
   font-variant-ligatures: none;
   padding: 8px 16px;
   width: 100%;
   outline: 0;
-}
-
-.ShareHeader-url:hover {
-  border-color: var(--color-brand-muted);
-}
-
-.ShareHeader-url:focus {
-  border-color: var(--color-brand);
+  transition: all 0.2s ease;
 }
 
 .ShareHeader-urlBox {
   display: flex;
+}
+
+.ShareHeader-url:hover {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 @media (max-width: 1152px) {
@@ -827,6 +824,9 @@ h3 {
   background-color: var(--snippets_container-background-unfocused);
 }
 
+.SnippetContainer--isRunning .CodeContainer {
+  opacity: 0.5;
+}
 
 .NewSnippetContainer {
   cursor: pointer;
@@ -834,7 +834,7 @@ h3 {
   opacity: 0.7;
 }
 
-.NewSnippetContainer:hover{
+.NewSnippetContainer:hover {
   opacity: 1;
 }
 
@@ -1012,7 +1012,11 @@ a.ResultListSection--subHeading-section:hover {
 .ModulePickerModal {
   position: absolute;
 
-  background: linear-gradient(136.61deg, rgb(39, 40, 43) 13.72%, rgb(45, 46, 49) 74.3%);
+  background: linear-gradient(
+    136.61deg,
+    rgb(39, 40, 43) 13.72%,
+    rgb(45, 46, 49) 74.3%
+  );
   backdrop-filter: blur(12px);
   color: white;
   z-index: 9999999;
@@ -1022,7 +1026,7 @@ a.ResultListSection--subHeading-section:hover {
   pointer-events: all;
 
   border-radius: 8px;
-  box-shadow:rgba(0, 0, 0, 0.2) 0px 4px 24px;
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 4px 24px;
 }
 
 .SnippetContainer--unposition .SnippetTitle-deleteButton {
@@ -1075,7 +1079,6 @@ a.ResultListSection--subHeading-section:hover {
   width: 400px;
 }
 
-
 .ModuleListItem {
   display: flex;
   justify-content: space-between;
@@ -1086,7 +1089,7 @@ a.ResultListSection--subHeading-section:hover {
 }
 
 .ModuleListItem:hover {
-  background-color: rgba(255,255,255,0.05);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .ModuleListItem-info {
@@ -1097,14 +1100,14 @@ a.ResultListSection--subHeading-section:hover {
 }
 
 .ModuleListItem-name {
- color: rgba(255,255,255,0.8);
- font-family: var(--heading-font);
- font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-family: var(--heading-font);
+  font-size: 0.9rem;
 }
 
 .ModuleListItem-description {
-  color: rgba(255,255,255,0.5);
- font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.9rem;
 }
 
 .ModuleListItem-description,
@@ -1115,7 +1118,7 @@ a.ResultListSection--subHeading-section:hover {
   width: 280px;
 }
 
-.ModuleListItem:hover .ModuleListItem-importButton{
+.ModuleListItem:hover .ModuleListItem-importButton {
   opacity: 1;
 }
 .ModuleListItem-importButton {

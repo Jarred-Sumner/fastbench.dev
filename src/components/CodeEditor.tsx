@@ -58,7 +58,8 @@ export const CodeEditor = React.memo(
 
         setHeight(
           editor.getSession().getScreenLength() * editor.renderer.lineHeight +
-            editor.renderer.scrollBar.getWidth()
+            editor.renderer.scrollBar.getWidth() +
+            20
         );
 
         editor.on("change", (arg, activeEditor) => {
@@ -67,7 +68,8 @@ export const CodeEditor = React.memo(
 
           setHeight(
             editor.getSession().getScreenLength() * editor.renderer.lineHeight +
-              editor.renderer.scrollBar.getWidth()
+              editor.renderer.scrollBar.getWidth() +
+              20
           );
           // }
         });

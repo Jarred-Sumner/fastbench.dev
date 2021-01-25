@@ -284,7 +284,7 @@ export class BenchmarkRunner {
 
     let lastUnfinished = this.busyWorkers.get(worker);
     let allUnfinished = typeof lastUnfinished !== "number";
-    debugger;
+
     if (allUnfinished) {
       lastUnfinished = -1;
 
@@ -303,11 +303,13 @@ export class BenchmarkRunner {
 
     if (allUnfinished) {
       this.sharedSnippetError = error;
-      console.error(error);
     } else {
       this.finishedSnippets.set(this.busyWorkers.get(worker), false);
       this.busyWorkers.delete(worker);
-      this.errorData[this.snippetIdMap.get(lastUnfinished)] = error;
+      const index = this.snippetIdMap.get(lastUnfinished);
+      if (!this.errorData[index]) {
+        this.errorData[index] = error;
+      }
     }
 
     if (this.errorData.some(Boolean) && this.sharedSnippetError) {

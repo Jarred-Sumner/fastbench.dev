@@ -41,8 +41,10 @@ import {
 import smoothscroll from "smoothscroll-polyfill";
 
 const ERROR_PATH = "/sounds/error.mp3";
+const CANCEl_PATH = "/sounds/cancel.mp3";
 
 let errorSound: HTMLAudioElement = null;
+let cancelSound: HTMLAudioElement = null;
 
 if (typeof window !== "undefined") {
   smoothscroll.polyfill();
@@ -469,8 +471,9 @@ const BenchmarkPage = ({
 
   const workerType = benchmark.workerType;
   const onCancelTest = React.useCallback(() => {
+    cancelSound.play().catch((err) => console.error(err));
     runner.cancel();
-  }, [runner]);
+  }, [runner, cancelSound]);
 
   React.useEffect(() => {
     if (workers?.current?.length) {
@@ -555,6 +558,10 @@ const BenchmarkPage = ({
         errorSound = document.createElement("audio");
         errorSound.src = ERROR_PATH;
         errorSound.autoplay = false;
+
+        cancelSound = document.createElement("audio");
+        cancelSound.src = CANCEl_PATH;
+        cancelSound.autoplay = false;
         document.body.appendChild(errorSound);
       } catch (exception) {}
     }
@@ -651,6 +658,7 @@ const BenchmarkPage = ({
         console.timeEnd("Completed test run");
         console.error(err);
         globalThis.onerror = null;
+
         setErrors(runner.errorData);
         setSharedSnippetError(runner.sharedSnippetError);
         setBenchmarkResult(null);
@@ -659,7 +667,7 @@ const BenchmarkPage = ({
         runner.cleanup();
         setDirty(false);
 
-        if (errorSound) {
+        if (!err?.cancel && errorSound) {
           errorSound.play().catch((err) => console.error(err));
         }
       }
