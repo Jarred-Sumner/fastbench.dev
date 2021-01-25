@@ -12,7 +12,7 @@ if (typeof window === "undefined") {
     ["require", "exports", "module", "ace/lib/dom"],
     function (require, exports, module) {
       exports.isDark = true;
-      exports.cssClass = "ace-monokai";
+      exports.cssClass = "ace-tomorrow-night-eighties";
     }
   );
   require("ace-builds/src-noconflict/mode-javascript");
@@ -38,7 +38,7 @@ export const CodeEditor = React.memo(
     onChange,
     onLoad: _onLoad,
     placeholder = "Start writing code",
-    theme = "monokai",
+    theme = "tomorrow-night-eighties",
     defaultHeight = 150,
   }) => {
     const [height, _setHeight] = React.useState(defaultHeight);
