@@ -1,5 +1,6 @@
 import type { default as AceEditorType } from "react-ace";
 import * as React from "react";
+import { listeners } from "process";
 
 let AceEditor: typeof AceEditorType;
 
@@ -32,83 +33,86 @@ const editorProps = {
   lineHeight: 1.2,
 };
 
-export const CodeEditor = React.memo(
-  ({
-    defaultValue,
-    onChange,
-    onLoad: _onLoad,
-    placeholder = "Start writing code",
-    theme = "tomorrow-night-eighties",
-    defaultHeight = 150,
-  }) => {
-    const [height, _setHeight] = React.useState(defaultHeight);
-    const aceEditorRef = React.useRef();
-    const setHeight = React.useCallback(
-      (height) => {
-        _setHeight(Math.max(height, defaultHeight));
-      },
-      [_setHeight, defaultHeight]
-    );
+export const CodeEditor = ({
+  defaultValue,
+  onChange,
+  onLoad: _onLoad,
+  placeholder = "Start writing code",
+  theme = "tomorrow-night-eighties",
+  defaultHeight = 150,
+}) => {
+  const [height, _setHeight] = React.useState(defaultHeight);
+  const [hasLoaded, setLoaded] = React.useState(false);
 
-    const onLoad = React.useCallback(
-      (editor) => {
-        if (_onLoad) {
-          _onLoad(editor);
-        }
+  const aceEditorRef = React.useRef();
+  const setHeight = React.useCallback(
+    (height) => {
+      _setHeight(Math.max(height, defaultHeight));
+    },
+    [_setHeight, defaultHeight, hasLoaded]
+  );
+
+  const onLoad = React.useCallback(
+    (editor) => {
+      if (_onLoad) {
+        _onLoad(editor);
+      }
+
+      aceEditorRef.current = editor;
+      const initialHeight =
+        editor.getSession().getScreenLength() * editor.renderer.lineHeight +
+        editor.renderer.scrollBar.getWidth() +
+        20;
+      setHeight(initialHeight);
+      setLoaded(true);
+      debugger;
+
+      editor.on("change", (arg, activeEditor) => {
+        const aceEditor = activeEditor;
+        aceEditorRef.current = activeEditor;
 
         setHeight(
           editor.getSession().getScreenLength() * editor.renderer.lineHeight +
             editor.renderer.scrollBar.getWidth() +
             20
         );
+        // }
+      });
+    },
+    [_onLoad, setHeight, defaultHeight, aceEditorRef, setLoaded]
+  );
 
-        editor.on("change", (arg, activeEditor) => {
-          const aceEditor = activeEditor;
-          aceEditorRef.current = activeEditor;
+  const hasSetInitialHeight = React.useRef(false);
 
-          setHeight(
-            editor.getSession().getScreenLength() * editor.renderer.lineHeight +
-              editor.renderer.scrollBar.getWidth() +
-              20
-          );
-          // }
-        });
-      },
-      [_onLoad, setHeight, defaultHeight, aceEditorRef]
-    );
+  const styleProp =
+    typeof window !== "undefined"
+      ? React.useMemo(() => ({ height: height, minHeight: height }), [height])
+      : null;
 
-    const styleProp = React.useMemo(() => ({ height }), [height]);
-
-    React.useLayoutEffect(() => {
-      if (aceEditorRef.current) {
-        aceEditorRef.current.resize();
-      }
-    }, [height, aceEditorRef]);
-
-    return (
-      <div style={styleProp} className={"CodeContainer"}>
-        <AceEditor
-          placeholder={placeholder}
-          mode="javascript"
-          theme="monokai"
-          name="blah2"
-          onLoad={onLoad}
-          onChange={onChange}
-          scrollMargin={zeorArray}
-          fontSize={"1rem"}
-          height="inherit"
-          showPrintMargin={true}
-          wrapEnabled
-          maxLines={Infinity}
-          showGutter={true}
-          editorProps={editorProps}
-          className={"CodeEditor"}
-          width={"100%"}
-          highlightActiveLine={true}
-          defaultValue={defaultValue}
-          setOptions={options}
-        />
-      </div>
-    );
-  }
-);
+  return (
+    <div style={styleProp} className={"CodeContainer"}>
+      <AceEditor
+        placeholder={placeholder}
+        mode="javascript"
+        theme="monokai"
+        name="blah2"
+        onLoad={onLoad}
+        onChange={onChange}
+        scrollMargin={zeorArray}
+        fontSize={"1rem"}
+        height="inherit"
+        showPrintMargin={true}
+        wrapEnabled
+        minLines={5}
+        maxLines={Infinity}
+        showGutter={true}
+        editorProps={editorProps}
+        className={"CodeEditor"}
+        width={"100%"}
+        highlightActiveLine={true}
+        defaultValue={defaultValue}
+        setOptions={options}
+      />
+    </div>
+  );
+};

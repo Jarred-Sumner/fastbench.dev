@@ -346,7 +346,7 @@ export const SnippetContainer = ({
         <CodeEditor
           defaultValue={defaultCode.current}
           onChange={onChangeCode}
-          key={`runState-${runState}`}
+          key={`runState-${runState === SnippetRunState.running}`}
           placeholder={codePlaceholder}
         />
       )}

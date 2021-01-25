@@ -12,6 +12,9 @@ import {
   SHARE_CARD_WIDTH,
 } from "src/components/ShareCardDimensions";
 import fs from "fs";
+import { Benchmark } from "src/lib/Benchmark";
+import { BenchmarkResult } from "src/lib/SnippetResult";
+import { Result } from "src/components/ResultCard";
 
 let ShareCard;
 
@@ -267,10 +270,22 @@ const renderShareCardSVG = async (results, baseline, fastest, title) => {
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   const { id, version, format } = req.query;
 
-  const { benchmark, benchmarkResults, results } = await fetchBenchmark(
-    version,
-    id
-  );
+  let benchmark: Benchmark,
+    benchmarkResults: BenchmarkResult,
+    results: Result[];
+
+  try {
+    const resp = await fetchBenchmark(version, id);
+    benchmark = resp.benchmark;
+    benchmarkResults = resp.benchmarkResults;
+    results = resp.results;
+  } catch (exception) {
+    console.error(exception);
+    res.status(500);
+    res.send("error.txt");
+    return;
+  }
+
   let fastest, baseline;
 
   for (let result of results) {
