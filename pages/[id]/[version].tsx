@@ -282,6 +282,7 @@ export const ShowBenchmarkPage = ({
   runState,
   setRunState,
   errors,
+  isLoadingData,
   setErrors,
   snippets,
   setTransform,
@@ -402,7 +403,11 @@ export const ShowBenchmarkPage = ({
         )}
 
         {runState === SnippetRunState.ran ? (
-          <ShareSheet key={benchmark.githubURL} benchmark={benchmark} />
+          <ShareSheet
+            key={benchmark.githubURL}
+            benchmark={benchmark}
+            isLoading={isLoadingData}
+          />
         ) : undefined}
 
         <SnippetList
@@ -442,6 +447,7 @@ const BenchmarkPage = ({
   );
 
   const [results, setResults] = React.useState(defaultResults);
+  const [isLoadingData, setLoadingData] = React.useState(false);
 
   const [benchmarkResult, setBenchmarkResult] = React.useState<BenchmarkResult>(
     defaultBenchmarkResults
@@ -619,27 +625,28 @@ const BenchmarkPage = ({
             navigator.userAgent,
             results
           );
-          setBenchmarkResult(benchmarkResults);
-          setResults(benchmarkResults.toResults(_benchmark.snippets));
-          setBenchmark(_benchmark);
-          runner.cleanup();
-          setRunState(SnippetRunState.ran);
 
           if (updateType < BenchmarkUpdateType.results) {
+            setLoadingData(true);
             uploadBenchmark(_benchmark, results, updateType).then(
               ({ value: benchmark, error, message }) => {
                 if (error) {
                   alert(message);
+                  setLoadingData(false);
                   return;
                 }
 
                 setBenchmark(Benchmark.fromJSON(benchmark.fastbench));
 
-                router.replace(
-                  "/[id]/[version]",
-                  benchmark.url.replace("https://fastbench.dev", ""),
-                  { shallow: true }
-                );
+                router
+                  .replace(
+                    "/[id]/[version]",
+                    benchmark.url.replace("https://fastbench.dev", ""),
+                    { shallow: true }
+                  )
+                  .finally(() => {
+                    setLoadingData(false);
+                  });
               }
             );
           } else {
@@ -647,6 +654,12 @@ const BenchmarkPage = ({
               console.log("Uploaded results.");
             });
           }
+
+          setBenchmarkResult(benchmarkResults);
+          setResults(benchmarkResults.toResults(_benchmark.snippets));
+          setBenchmark(_benchmark);
+          runner.cleanup();
+          setRunState(SnippetRunState.ran);
         } else {
           setRunState(SnippetRunState.pending);
           runner.cleanup();
@@ -655,6 +668,7 @@ const BenchmarkPage = ({
         setDirty(false);
       },
       (err) => {
+        setLoadingData(false);
         console.timeEnd("Completed test run");
         console.error(err);
         globalThis.onerror = null;
@@ -684,6 +698,7 @@ const BenchmarkPage = ({
     title,
     setBenchmarkResult,
     workers,
+    setLoadingData,
     isDirty,
     setDirty,
     runner,
@@ -708,6 +723,7 @@ const BenchmarkPage = ({
       title={title}
       errors={errors}
       setErrors={setErrors}
+      isLoadingData={isLoadingData}
       sharedSnippetError={sharedSnippetError}
       setSharedSnippetError={setSharedSnippetError}
       snippets={snippets}

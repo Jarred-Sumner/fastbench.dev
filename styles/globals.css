@@ -1178,3 +1178,23 @@ a.ResultListSection--subHeading-section:hover {
     flex-direction: column;
   }
 }
+
+.ShareSheet-image-loading {
+  animation: fade-in-out 1.5s ease;
+  transform: scale(2);
+  transform-origin: center center;
+  animation-iteration-count: infinite;
+  animation-direction: alternate-reverse;
+}
+
+@keyframes fade-in-out {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.66;
+  }
+  100% {
+    opacity: 1;
+  }
+}

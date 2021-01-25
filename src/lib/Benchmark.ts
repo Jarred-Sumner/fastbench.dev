@@ -19,8 +19,18 @@ export function benchmarkResultsURL(slug: string, version: string) {
   return `https://cdn.jsdelivr.net/gh/${process.env.GITHUB_REPO_OWNER}/${process.env.GITHUB_REPO}@master/${slug}/${version}/${RESULTS_FILENAME}`;
 }
 
+export function altBenchmarkResultsURL(slug: string, version: string) {
+  return `https://raw.githack.com/${process.env.GITHUB_REPO_OWNER}/${process.env.GITHUB_REPO}@master/${slug}/${version}/${RESULTS_FILENAME}`;
+}
+
 export function joinBenchmarkURL(slug: string, version: string, ...parts) {
   return `https://cdn.jsdelivr.net/gh/${process.env.GITHUB_REPO_OWNER}/${
+    process.env.GITHUB_REPO
+  }@master/${slug}/${version}/${path.join(...parts)}`;
+}
+
+export function altJoinBenchmarkURL(slug: string, version: string, ...parts) {
+  return `https://raw.githack.com/${process.env.GITHUB_REPO_OWNER}/${
     process.env.GITHUB_REPO
   }@master/${slug}/${version}/${path.join(...parts)}`;
 }

@@ -3,6 +3,7 @@ import { getMultiplier, Result } from "src/components/ResultCard";
 import {
   Benchmark,
   joinBenchmarkURL,
+  altJoinBenchmarkURL,
   RESULTS_FILENAME,
 } from "src/lib/Benchmark";
 import { BenchmarkResult } from "src/lib/SnippetResult";
@@ -28,10 +29,26 @@ function sortResult(a: Result, b: Result) {
 }
 
 export async function fetchBenchmark(version, id, index = -1) {
-  const [benchmarkResp, resultResp] = await Promise.all([
+  let [benchmarkResp, resultResp] = await Promise.all([
     fetch(joinBenchmarkURL(id, version, "package.json")),
     fetch(joinBenchmarkURL(id, version, RESULTS_FILENAME)),
   ]);
+
+  if (benchmarkResp.status > 299 && resultResp.status > 299) {
+    console.log("Retrying using alt url...");
+    [benchmarkResp, resultResp] = await Promise.all([
+      fetch(altJoinBenchmarkURL(id, version, "package.json")),
+      fetch(altJoinBenchmarkURL(id, version, RESULTS_FILENAME)),
+    ]);
+  } else if (benchmarkResp.status > 299) {
+    benchmarkResp = await fetch(
+      altJoinBenchmarkURL(id, version, "package.json")
+    );
+  } else if (resultResp.status > 299) {
+    resultResp = await fetch(
+      altJoinBenchmarkURL(id, version, RESULTS_FILENAME)
+    );
+  }
 
   const benchmark = Benchmark.fromJSON((await benchmarkResp.json()).fastbench);
 
