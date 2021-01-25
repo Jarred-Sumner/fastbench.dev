@@ -98,12 +98,12 @@ const SharedHeadingToolbar = ({
       >
         <div className="Toggler" name="Toggler" />
         <label htmlFor="Toggler" className="SnippetTitle-transformField-label">
-          &lt;JSX&gt;
+          Use React
         </label>
       </div>
 
       <div onClick={onShowImportModal} className="SnippetTitle-importButton">
-        + IMPORT
+        IMPORT
       </div>
 
       {showImportModal && (

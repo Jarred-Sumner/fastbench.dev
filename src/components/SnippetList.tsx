@@ -196,7 +196,7 @@ export const SnippetList = ({
           setTransform={setTransform}
           transform={transform}
           icon={<SharedIcon className={"SnippetIcon"} />}
-          placeholder={"Shared code"}
+          placeholder={"SHARED CODE"}
           code={sharedSnippet.code}
           onChangeCode={onChangeSharedSnippet}
           showImportModal={showImportModal}

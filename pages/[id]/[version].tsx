@@ -334,7 +334,7 @@ export const ShowBenchmarkPage = ({
           <TitleInput
             href={router.asPath}
             defaultValue={benchmark.name}
-            placeholder="Untitled benchmark"
+            placeholder="untitled"
             onInput={handleTitleChangeEvent}
           />
 
