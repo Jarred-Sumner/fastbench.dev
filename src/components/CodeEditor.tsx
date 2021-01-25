@@ -65,7 +65,6 @@ export const CodeEditor = ({
         20;
       setHeight(initialHeight);
       setLoaded(true);
-      debugger;
 
       editor.on("change", (arg, activeEditor) => {
         const aceEditor = activeEditor;

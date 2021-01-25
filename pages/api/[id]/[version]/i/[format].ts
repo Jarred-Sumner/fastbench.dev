@@ -281,8 +281,9 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     results = resp.results;
   } catch (exception) {
     console.error(exception);
-    res.status(500);
-    res.send("error.txt");
+    res.status(404);
+    res.setHeader("Cache-Çontrol", "private");
+    res.send({ error: "not found." });
     return;
   }
 
@@ -326,7 +327,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
               benchmark.name
             );
             res.setHeader("Content-Type", "image/png");
-            res.setHeader("Cache-Control", "");
+            res.setHeader(
+              "Cache-Control",
+              "public, max-age=120, s-max-age=60, stale-while-revalidate=99999, stale-if-error=99999"
+            );
             res.statusCode = 200;
             res.write(svg);
             res.end();
@@ -348,7 +352,10 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
             benchmark.name
           );
           res.setHeader("Content-Type", "image/svg+xml");
-          res.setHeader("Cache-Control", "");
+          res.setHeader(
+            "Cache-Control",
+            "public, max-age=120, s-max-age=60, stale-while-revalidate=99999, stale-if-error=99999"
+          );
           res.statusCode = 200;
           res.write(svg);
           res.end();
