@@ -58,6 +58,7 @@ const FlexChild = ({
   );
 };
 
+export const MeasureTextContext = React.createContext({ measure: null });
 // I am embarrassed at the performance of this.
 // Maybe someday I'll move it to a library.
 export const Flexbox = ({
@@ -118,8 +119,24 @@ export const Flexbox = ({
 
         if (child?.type === measureType && onMeasure) {
           let _props = { ...child.props };
+          let chosenWidth =
+            _props?.width ||
+            _props?.yoga?.width ||
+            _props?.yoga?.maxWidth ||
+            _props?.yoga?.minWidth;
+
+          let chosenHeight =
+            _props?.height ||
+            _props?.yoga?.height ||
+            _props?.yoga?.maxHeight ||
+            _props?.yoga?.minHeight;
           node.setMeasure((width, height) => {
-            const result = onMeasure(_props, width, height);
+            const result = onMeasure(
+              _props,
+              width || chosenWidth,
+              height || chosenHeight
+            );
+            chosenHeight = chosenWidth = null;
             _props = null;
 
             return result;
@@ -298,10 +315,14 @@ export const Flexbox = ({
     rootNode.current = null;
   }
 
+  globalThis.onMeasure = onMeasure;
+
   return (
-    <PositionContext.Provider value={{ x: layout.x, y: layout.y }}>
-      {result}
-    </PositionContext.Provider>
+    <MeasureTextContext.Provider value={onMeasure}>
+      <PositionContext.Provider value={{ x: layout.x, y: layout.y }}>
+        {result}
+      </PositionContext.Provider>
+    </MeasureTextContext.Provider>
   );
 };
 

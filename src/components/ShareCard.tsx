@@ -19,7 +19,7 @@ import {
   PositionType,
   FlexWrap,
 } from "stretch-layout";
-import { Flexbox } from "src/components/Flexbox";
+import { Flexbox, MeasureTextContext } from "src/components/Flexbox";
 import {
   SHARE_CARD_HEIGHT,
   SHARE_CARD_WIDTH,
@@ -51,33 +51,47 @@ const PROGRESS_BAR_HEIGHT = 2;
 const PROGRESS_BAR_MIDPOINT = (RESULT_LABEL_HEIGHT - PROGRESS_BAR_HEIGHT) / 2;
 const RESULT_LABEL_Y_OFFSET = 6;
 const PROGRESS_BAR_WIDTH = 100;
-const RESULT_LABEL_WIDTH = 148;
+const RESULT_LABEL_WIDTH = 100;
 
 function getResultYOffset(index: number) {
   return index > 0 ? index * RESULT_LABEL_HEIGHT + RESULT_LABEL_Y_OFFSET : 0;
 }
 const ResultLabel = ({ rank, title, index, theme, ...props }) => {
+  const onMeasure = globalThis.onMeasure;
   let fontSize = 14;
 
   title = title.substring(0, 16);
+  const fontProps = {
+    fontFamily: "IBM Plex Sans",
+    fontWeight: "bold",
+    fontSize,
+  };
 
+  const { width, height } = onMeasure(
+    {
+      ...fontProps,
+      children: title,
+    },
+    RESULT_LABEL_WIDTH,
+    RESULT_LABEL_HEIGHT
+  );
+
+  console.log({ width, height });
   return (
     <text
       {...props}
-      fontFamily="IBM Plex Sans"
-      fontWeight="bold"
-      fontSize={fontSize}
+      {...fontProps}
       fill={rank === 1 ? theme.highlight : theme.primary}
       yoga={{
-        flexShrink: 0,
+        width,
+        height: height + RESULT_LABEL_Y_OFFSET,
+        // flexDirection: FlexDirection.Column,
         flexGrow: 1,
-        flexBasis: 1,
-        height: RESULT_LABEL_HEIGHT,
-        paddingTop: RESULT_LABEL_Y_OFFSET / 2,
-        paddingBottom: RESULT_LABEL_Y_OFFSET / 2,
+        // minWidth: RESULT_LABEL_WIDTH / 2,
+        flexShrink: 0,
       }}
     >
-      {title.substring(0, 20)}
+      {title}
     </text>
   );
 };
@@ -123,6 +137,7 @@ export function ShareCard({
   baseline: Result;
   fastest: Result;
 }) {
+  globalThis.onMeasure = onMeasure;
   const theme = themes[colorScheme];
   const {
     primary,
