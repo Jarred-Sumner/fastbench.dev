@@ -57,11 +57,21 @@ if (process.env.NODE_ENV === "production") {
 } else {
   SAMPLE_DATA = [
     [
-      `import _ from "https://cdn.skypack.dev/lodash";\nimport {fill, sample} from "https://cdn.skypack.dev/lodash";\nimport * as lodash from "https://cdn.skypack.dev/lodash";var a = new Array(100)\nvar b = new Array();`,
+      `import _ from 'lodash';
+import underscore from 'underscore';
+import * as R from 'ramda';
+
+const array = new Array(1000).map(a => Math.random() * 1000);
+
+function add(value) {
+  return value + 1;
+}
+      `,
     ],
-    ["a.fill(100);", "[].fill"],
-    [`_.fill(a, 100);`, "_.fill"],
-    [`for (let i = 0; i  < 100; i++) { b.push(100); }`, "[].push"],
+    ["array.map(add)", "Array.map"],
+    ["_.map(array, add)", "lodash.map"],
+    ["underscore.map(array, add)", "underscore.map"],
+    ["R.map(add, array)", "ramda.map"],
   ];
 }
 
@@ -461,10 +471,9 @@ const BenchmarkPage = ({
     _defaultBenchmark
       ? () => Benchmark.fromJSON(_defaultBenchmark)
       : new Benchmark(
-          [
-            Snippet.create(SAMPLE_DATA[1][0], SAMPLE_DATA[1][1]),
-            Snippet.create(SAMPLE_DATA[2][0], SAMPLE_DATA[2][1]),
-          ],
+          SAMPLE_DATA.slice(1).map(([code, title]) =>
+            Snippet.create(code, title)
+          ),
           Snippet.shared(SAMPLE_DATA[0][0]),
           "",
           Math.random().toString(),
@@ -660,6 +669,15 @@ const BenchmarkPage = ({
           setBenchmark(_benchmark);
           runner.cleanup();
           setRunState(SnippetRunState.ran);
+
+          requestAnimationFrame(() => {
+            document
+              ?.querySelector(".NewBenchmarkPageContent")
+              ?.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              });
+          });
         } else {
           setRunState(SnippetRunState.pending);
           runner.cleanup();

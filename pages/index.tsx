@@ -1,5 +1,11 @@
+import Link from "next/link";
 import { AsyncShareCard } from "src/components/AsyncShareCard";
 import fixture from "src/components/fixture";
+import {
+  SHARE_CARD_HEIGHT,
+  SHARE_CARD_WIDTH,
+} from "src/components/ShareCardDimensions";
+import { getShareURL } from "src/components/ShareSheet";
 import { LinkButton } from "../src/components/LinkButton";
 import { PageHeader } from "../src/components/PageHeader";
 import {
@@ -8,18 +14,29 @@ import {
   ResultCard,
 } from "../src/components/ResultCard";
 
-const SAMPLE_DATA: Result[][] = [
-  [
-    { id: "0", name: "[].forEach", operationsPerSecond: 800 },
-    { id: "1", name: "for of", operationsPerSecond: 1000 },
-    { id: "2", name: "_.forEach", operationsPerSecond: 600 },
-  ],
-  [
-    { id: "0", name: `"".substring`, operationsPerSecond: 400 },
-    { id: "1", name: '"".substr', operationsPerSecond: 500 },
-    { id: "2", name: '"".slice', operationsPerSecond: 600 },
-  ],
+const ID_LIST = [
+  "forEach-ozI4XL/0",
+  "Arrayfilter-benchmarks-rozB5K/0",
+  "Arraymap-cEAWT-/0",
+  "Arrayreduce-c1oQkQ/0",
 ];
+
+const defaultList = ID_LIST.map((_id) => {
+  const [id, version] = _id.split("/");
+
+  const src = getShareURL({ id, version });
+  return (
+    <Link key={src} href={src}>
+      <a href={src}>
+        <img
+          src={src + ".svg"}
+          width={SHARE_CARD_WIDTH}
+          height={SHARE_CARD_HEIGHT}
+        />
+      </a>
+    </Link>
+  );
+});
 
 export default function Home() {
   return (
@@ -31,7 +48,7 @@ export default function Home() {
           <h1 className={"Tagline"}>make the web a teeny bit faster.</h1>
           <p className={"Description"}>
             Test, compare, and optimize JavaScript performance. Share your
-            results with the world for a better web. TODO: improve copy.
+            results with the world for a better web.
           </p>
           <LinkButton href={"/benches/new"}>New benchmark</LinkButton>
         </main>
@@ -39,7 +56,7 @@ export default function Home() {
       </div>
 
       <div className={"Gallery"}>
-        <div className={"GalleryList"}></div>
+        <div className={"GalleryList"}>{defaultList}</div>
       </div>
     </div>
   );

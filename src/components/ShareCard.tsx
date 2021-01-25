@@ -195,6 +195,7 @@ export function ShareCard({
     [baseline, fastest, theme, ResultLabel]
   );
 
+  const multi = getMultiplier(fastest, baseline);
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -275,7 +276,7 @@ export function ShareCard({
               fontWeight={titleFontWeight}
               fill={highlight}
             >
-              {formatDecimal(getMultiplier(fastest, baseline))}x
+              {formatDecimal(multi, multi > 9.99 ? 0 : undefined)}x
             </text>
 
             <text

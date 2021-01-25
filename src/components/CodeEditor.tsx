@@ -88,6 +88,10 @@ export const CodeEditor = ({
       ? React.useMemo(() => ({ height: height, minHeight: height }), [height])
       : null;
 
+  if (typeof window === "undefined") {
+    return <div style={{ height }} className={"CodeContainer"}></div>;
+  }
+
   return (
     <div style={styleProp} className={"CodeContainer"}>
       <AceEditor
@@ -102,7 +106,7 @@ export const CodeEditor = ({
         height="inherit"
         showPrintMargin={true}
         wrapEnabled
-        minLines={5}
+        minLines={Math.max(defaultValue.split("/").length + 1, 5)}
         maxLines={Infinity}
         showGutter={true}
         editorProps={editorProps}

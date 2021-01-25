@@ -347,6 +347,11 @@ export const SnippetContainer = ({
           defaultValue={defaultCode.current}
           onChange={onChangeCode}
           placeholder={codePlaceholder}
+          defaultHeight={
+            disableTitle && defaultCode?.current?.length
+              ? defaultCode.current.split("/").length * 1.2 + 40
+              : undefined
+          }
         />
       )}
 

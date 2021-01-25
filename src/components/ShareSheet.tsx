@@ -66,6 +66,17 @@ export const ShareSheet = ({ benchmark, isLoading: _isLoading = false }) => {
   const shareURL = getShareURL(router.query);
   const isLoading = _isLoading || shareURL.includes("/benches/new");
 
+  const imgRef = React.useRef<HTMLImageElement>();
+  const reloadCount = React.useRef(0);
+
+  const reloadImage = React.useCallback(() => {
+    if (imgRef.current && reloadCount.current < 2) {
+      let src = imgRef.current.src;
+      imgRef.current.src = "";
+      imgRef.current.src = src;
+      reloadCount.current++;
+    }
+  }, [imgRef, reloadCount]);
   return (
     <>
       {shareCount > 0 && <div className="Confetti" ref={shareURLBox} />}
@@ -95,7 +106,9 @@ export const ShareSheet = ({ benchmark, isLoading: _isLoading = false }) => {
             <EmptyIcon />
           ) : (
             <img
-              src={`${shareURL}.svg`}
+              ref={imgRef}
+              onError={reloadImage}
+              src={`${shareURL}.svg?t=${Math.floor(Date.now() / 1000)}`}
               height={SHARE_CARD_HEIGHT}
               width={SHARE_CARD_WIDTH}
             />
