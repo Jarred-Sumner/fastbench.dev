@@ -34,7 +34,7 @@ const themes = {
     horizontalSpacing: 14,
     statFontFamily: "IBM Plex Sans",
     statFontWeight: "Bold",
-    muted: "rgb(152,152,152)",
+    muted: "rgba(255,255,255,0.6)",
     opsFontFamily: "IBM Plex Sans",
     opsFontWeight: "normal",
     titleFontFamily: "Space Mono",
