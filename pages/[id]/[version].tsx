@@ -40,6 +40,10 @@ import {
 } from "src/lib/BenchmarkRunnerWorker";
 import smoothscroll from "smoothscroll-polyfill";
 
+const ERROR_PATH = "/sounds/error.mp3";
+
+let errorSound: HTMLAudioElement = null;
+
 if (typeof window !== "undefined") {
   smoothscroll.polyfill();
 }
@@ -546,6 +550,14 @@ const BenchmarkPage = ({
     router.query.version === "new" || originalName !== benchmark.name;
 
   const onRunTest = React.useCallback(() => {
+    if (!errorSound) {
+      try {
+        errorSound = document.createElement("audio");
+        errorSound.src = ERROR_PATH;
+        errorSound.autoplay = false;
+        document.body.appendChild(errorSound);
+      } catch (exception) {}
+    }
     let _benchmark: Benchmark = benchmark;
     setRunState(SnippetRunState.running);
     document?.querySelector(".SnippetList")?.scrollIntoView({
@@ -613,6 +625,7 @@ const BenchmarkPage = ({
                   alert(message);
                   return;
                 }
+
                 setBenchmark(Benchmark.fromJSON(benchmark.fastbench));
 
                 router.replace(
@@ -640,12 +653,15 @@ const BenchmarkPage = ({
         globalThis.onerror = null;
         setErrors(runner.errorData);
         setSharedSnippetError(runner.sharedSnippetError);
-        debugger;
         setBenchmarkResult(null);
         setRunState(SnippetRunState.pending);
         console.error(err);
         runner.cleanup();
         setDirty(false);
+
+        if (errorSound) {
+          errorSound.play().catch((err) => console.error(err));
+        }
       }
     );
   }, [
