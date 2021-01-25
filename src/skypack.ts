@@ -91,6 +91,8 @@ export async function resolveSkypackModule(name: string): Promise<string> {
       })
     ).json();
 
+    console.log(pkg);
+
     moduleURLCache.set(
       name,
       `https://cdn.skypack.dev/${pkg.name}@${pkg.distTags.latest}`

@@ -3,6 +3,7 @@ import { Benchmark, TransformType } from "./lib/Benchmark";
 import type { default as BenchmarkType } from "benchmark";
 import type { LexerType } from "src/parseImports";
 import type { Service, TransformOptions } from "esbuild-wasm/esm/browser";
+import { resolveSkypackModule } from "src/skypack";
 
 const ESBUILD_WASM = "/esbuild.wasm";
 
@@ -26,6 +27,28 @@ export function setPostMessageHandler(
 ) {
   postMessage = _postMesasge;
   Suite = _Suite;
+}
+
+function runImport(importPath, originalPath) {
+  return new Promise((resolve, reject) => {
+    import(
+      /* webpackIgnore: true */
+      importPath
+    )
+      .then((ESM) => {
+        importsList[importPath] = ESM;
+        resolve(null);
+      })
+      .catch((exception) => {
+        const error = new Error(
+          `Importing module ${originalPath} failed.\nURL: ${importPath}\nError: ${exception.message}`
+        );
+        error.stack = exception.stack;
+        error.name = exception.name;
+
+        resolve(error);
+      });
+  });
 }
 
 let updateLength = Float64Array.BYTES_PER_ELEMENT * 5;
@@ -70,12 +93,14 @@ function stopProgressUpdates() {
 }
 let statusMessage = {
   status: 0,
+  id: 0,
   type: MessageType.statusUpdate,
   timestamp: 0,
 };
 
-function emitStatusMessage(status: StatusMessageType) {
+function emitStatusMessage(status: StatusMessageType, id: number) {
   statusMessage.status = status;
+  statusMessage.id = id;
   statusMessage.timestamp = performance.now();
   postMessage(statusMessage);
 }
@@ -102,7 +127,29 @@ async function processImports(__code: string) {
   let newCode = code.slice();
 
   for (let importStatement of imports) {
-    const path = code.substring(importStatement.s, importStatement.e);
+    let originalPath, path;
+    originalPath = path = code.substring(importStatement.s, importStatement.e);
+    // Handle imports typed manually, so you can do
+
+    if (!path.startsWith("http")) {
+      const pathParts = path.split("/");
+      let pathOffset = 1;
+      // import _ from "@loadsh/lodash";
+      if (path.startsWith("@")) {
+        pathOffset = 2;
+        path = await resolveSkypackModule(`${pathParts[0]}/${pathParts[1]}`);
+        debugger;
+      } else {
+        pathOffset = 1;
+        // import _ from "lodash";
+        path = await resolveSkypackModule(pathParts[0]);
+      }
+
+      if (pathParts.length >= pathOffset) {
+        path = path + "/" + pathParts.slice(pathOffset).join("/");
+      }
+    }
+
     let innerImportContent = code.substring(
       importStatement.ss,
       importStatement.s
@@ -140,12 +187,14 @@ async function processImports(__code: string) {
     }
 
     if (!importsList[path]) {
-      const ESM = await import(
-        /* webpackIgnore: true */
-        path
-      );
-      importsList[path] = ESM;
+      console.log("Importing", originalPath);
+      const importError = await runImport(path, originalPath);
+      console.log(importError);
+      if (importError) {
+        throw importError;
+      }
     }
+
     console.log("Imported from", path);
 
     let replacementCode = "";
@@ -181,11 +230,18 @@ async function start(
     suite.abort();
   }
 
-  emitStatusMessage(StatusMessageType.aboutToStart);
+  emitStatusMessage(StatusMessageType.aboutToStart, id);
+  let hasStarted = false;
 
   function errorHandler(error) {
+    if (!hasStarted) {
+      postMessage({ type: MessageType.start, id });
+    }
     postMessage({ type: MessageType.error, value: error, id });
     stopProgressUpdates();
+    // if (suite && !suite.aborted) {
+    //   suite.abort();
+    // }
   }
 
   if (!snippet?.code?.trim().length) {
@@ -219,8 +275,6 @@ async function start(
       errorHandler(exception);
       return;
     }
-
-    console.log(snippetCode);
   }
 
   try {
@@ -268,6 +322,7 @@ async function start(
       });
     },
     onStart: (...complete) => {
+      hasStarted = true;
       postMessage({ type: MessageType.start, id });
       startSendingProgressUpdates(id);
     },

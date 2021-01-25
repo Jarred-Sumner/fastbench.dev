@@ -27,6 +27,7 @@ export const SnippetList = ({
   transform,
   setTransform,
   snippets,
+  sharedSnippetError,
   setSnippets,
   sharedSnippet,
   runner,
@@ -202,6 +203,7 @@ export const SnippetList = ({
           showImportModal={showImportModal}
           key={"show" + showImportModal + "-" + transform}
           setShowImportModal={setShowImportModal}
+          error={sharedSnippetError}
           codePlaceholder={
             "Insert JavaScript code that runs before all benchmarks in here"
           }

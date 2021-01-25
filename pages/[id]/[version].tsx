@@ -281,6 +281,8 @@ export const ShowBenchmarkPage = ({
   setTransform,
   sharedSnippet,
   setSnippets,
+  sharedSnippetError,
+  setSharedSnippetError,
   onCancelTest,
   setTitle,
   isDirty,
@@ -313,8 +315,9 @@ export const ShowBenchmarkPage = ({
     setErrors(() => {
       const errors = new Array(snippets.length);
       errors.fill(null);
+      setSharedSnippetError(null);
     });
-  }, [setErrors, snippets, snippets.length]);
+  }, [setErrors, snippets, snippets.length, setSharedSnippetError]);
 
   const prevResults = React.useRef<Result[]>();
   React.useEffect(() => {
@@ -404,6 +407,7 @@ export const ShowBenchmarkPage = ({
           results={results}
           setDirty={setDirty}
           setSnippets={setSnippets}
+          sharedSnippetError={sharedSnippetError}
           errors={errors}
           runner={runner}
           focusedId={focusedId}
@@ -526,13 +530,17 @@ const BenchmarkPage = ({
   const sharedSnippet = benchmark.shared;
 
   const [errors, setErrors] = React.useState(() => new Array(snippets.length));
+  const [sharedSnippetError, setSharedSnippetError] = React.useState<Error>(
+    null
+  );
 
   React.useEffect(() => {
     setErrors(() => {
       const errors = new Array(snippets.length);
       errors.fill(null);
+      setSharedSnippetError(null);
     });
-  }, [setErrors, snippets, snippets.length]);
+  }, [setErrors, snippets, snippets.length, setSharedSnippetError]);
 
   const isNewBenchmark =
     router.query.version === "new" || originalName !== benchmark.name;
@@ -628,24 +636,11 @@ const BenchmarkPage = ({
       },
       (err) => {
         console.timeEnd("Completed test run");
-        let lastId;
-        let found = false;
-        for (let [id, isFinished] of runner.finishedSnippets.entries()) {
-          if (!isFinished) {
-            runner.errorData[Number.isFinite(lastId) ? lastId : id] = err;
-            found = true;
-            break;
-          }
-          lastId = id;
-        }
-
-        if (!found) {
-          runner.errorData[runner.errorData.length - 1] = err;
-        }
-
         console.error(err);
         globalThis.onerror = null;
         setErrors(runner.errorData);
+        setSharedSnippetError(runner.sharedSnippetError);
+        debugger;
         setBenchmarkResult(null);
         setRunState(SnippetRunState.pending);
         console.error(err);
@@ -658,6 +653,7 @@ const BenchmarkPage = ({
     sharedSnippet,
     setResults,
     setErrors,
+    setSharedSnippetError,
 
     router,
     isNewBenchmark,
@@ -688,6 +684,8 @@ const BenchmarkPage = ({
       title={title}
       errors={errors}
       setErrors={setErrors}
+      sharedSnippetError={sharedSnippetError}
+      setSharedSnippetError={setSharedSnippetError}
       snippets={snippets}
       sharedSnippet={sharedSnippet}
       setTransform={setTransform}

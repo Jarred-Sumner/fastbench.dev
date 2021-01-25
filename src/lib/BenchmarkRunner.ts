@@ -97,7 +97,7 @@ export class BenchmarkRunner {
   }
 
   onMessageEvent = ({
-    data: { id: _id, type, value },
+    data: { id: _id, type, value, error },
     source,
     target,
     srcElement,
@@ -127,6 +127,13 @@ export class BenchmarkRunner {
 
       case MessageType.cycle: {
         this.snippetData[snippetIndex] = value;
+        break;
+      }
+
+      case MessageType.error: {
+        const workerId = this.workers.indexOf(target || srcElement);
+
+        this.errorEvents.get(this.workers[workerId])(value);
         break;
       }
 
@@ -229,12 +236,13 @@ export class BenchmarkRunner {
   }
 
   finish(error) {
-    if (error) {
+    if (error && this.finishRejecter) {
       this.finishResolver = null;
       this.finishRejecter(error);
+      this.finishRejecter = null;
     } else if (this.finishResolver) {
       this.finishResolver(this.getResults());
-      this.finishRejecter = null;
+      this.finishResolver = this.finishRejecter = null;
     }
   }
   cleanup() {
@@ -252,20 +260,59 @@ export class BenchmarkRunner {
     this.progressBarUpdaters.length = 0;
     this.finishedSnippets.clear();
     this.snippetData.length = 0;
+    this.sharedSnippetError = null;
   }
+
+  sharedSnippetError = null;
 
   onErrorEvent = (worker) => (event: ErrorEvent) => {
     if (!event) {
       return;
     }
 
-    let error = event?.error;
-    if (typeof event === "string") {
+    let error: Error;
+
+    if (typeof event === "object" && event instanceof Error) {
+      error = event;
+    } else if (typeof event === "string") {
       error = new Error(event);
+    } else if (event.error instanceof Error) {
+      error = event.error;
+    } else if (event.message instanceof Error || event?.message?.name) {
+      error = event.message;
     }
-    this.errorData[this.busyWorkers.get(worker)] = error;
-    this.finishedSnippets.set(this.busyWorkers.get(worker), false);
-    this.busyWorkers.delete(worker);
+
+    let lastUnfinished = this.busyWorkers.get(worker);
+    let allUnfinished = typeof lastUnfinished !== "number";
+    debugger;
+    if (allUnfinished) {
+      lastUnfinished = -1;
+
+      for (let [index, finished] of this.finishedSnippets.entries()) {
+        if (!finished) {
+          lastUnfinished = index;
+        } else {
+          allUnfinished = false;
+        }
+      }
+
+      if (!allUnfinished) {
+        this.busyWorkers.set(worker, lastUnfinished);
+      }
+    }
+
+    if (allUnfinished) {
+      this.sharedSnippetError = error;
+      console.error(error);
+    } else {
+      this.finishedSnippets.set(this.busyWorkers.get(worker), false);
+      this.busyWorkers.delete(worker);
+      this.errorData[this.snippetIdMap.get(lastUnfinished)] = error;
+    }
+
+    if (this.errorData.some(Boolean) && this.sharedSnippetError) {
+      this.sharedSnippetError = null;
+    }
 
     this.finish(error);
   };
